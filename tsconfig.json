@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "outDir": "./",
+    "module": "commonjs",
+    "target": "es5",
+    "baseUrl": "http://localhost:8080",
+    "watch": true,
+    "lib": [
+      "dom",
+      "es2016"
+    ],
+    "sourceMap": true,
+    "moduleResolution": "node",
+    "rootDir": "./",
+    "emitDecoratorMetadata": true,
+    "removeComments": false,
+    "declaration": true,
+    "experimentalDecorators": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noImplicitAny": false,
+    "strictNullChecks": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "noUnusedLocals": true
+  },
+  "exclude": [
+    "node_modules",
+    "test",
+    "build"
+  ]
+}
