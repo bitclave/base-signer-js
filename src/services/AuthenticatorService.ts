@@ -4,6 +4,7 @@ import KeyPairFactory from '../helpers/keypair/KeyPairFactory';
 import Auth from '../models/Auth';
 import PassPhrase from '../models/PassPhrase';
 import Pair from '../models/Pair';
+import Client from '../models/Client';
 
 /**
  * This class only for demo and for debug flavor
@@ -23,11 +24,11 @@ export default class AuthenticatorService implements ServiceRpcMethods {
         return map;
     }
 
-    public generateAccessToken(passPhrase: PassPhrase): Auth {
+    public generateAccessToken(passPhrase: PassPhrase, client: Client, origin: string): Auth {
         let accessToken: string = this.makeClearAccessToken();
         accessToken += this.keyPair.signMessage(accessToken);
 
-        return new Auth(passPhrase.pass, 'http://localhost/', accessToken);
+        return new Auth(passPhrase.pass, origin, accessToken);
     }
 
     public get address(): string {

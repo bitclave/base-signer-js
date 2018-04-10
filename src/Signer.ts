@@ -10,25 +10,35 @@ import Client from './models/Client';
 import AccessToken from './models/AccessToken';
 import EncryptionService from './services/EncryptionService';
 import DecryptionService from './services/DecryptionService';
-import JsonRpcWs = require('json-rpc-ws');
+import KeyPair from './helpers/keypair/KeyPair';
+import ArgumentUtils from './utils/ArgumentUtils';
+
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const express = require('express');
+const app = express();
+const port = 3545;
 
 export default class Signer {
 
-    private clientService: ClientService;
-    private signerService: SignerService;
     public encryptionService: EncryptionService;
     public decryptionService: DecryptionService;
 
+    private clientService: ClientService;
+    private signerService: SignerService;
+
     constructor() {
+        const passPhrase: string = ArgumentUtils.getValue('-p');
+        // const authenticatorAddress: string = ArgumentUtils.getValue('-a');
+
         const keyPairHelper: KeyPairHelper = KeyPairFactory.getDefaultKeyPairCreator();
+        const ownKeyPair: KeyPair = keyPairHelper.createKeyPair(passPhrase);
 
         const authenticator: AuthenticatorService = new AuthenticatorService();
-        this.clientService = new ClientService(keyPairHelper, authenticator.address);
+        this.clientService = new ClientService(keyPairHelper, ownKeyPair, authenticator.address);
         this.signerService = new SignerService();
         this.encryptionService = new EncryptionService();
         this.decryptionService = new DecryptionService();
-
-        const server = JsonRpcWs.createServer();
 
         const methods = this.mergeRpcMethods(
             authenticator,
@@ -38,11 +48,26 @@ export default class Signer {
             this.decryptionService
         );
 
-        for (let key in methods) {
-            server.expose(key, methods[key]);
-        }
+        app.use(cors());
+        app.use(bodyParser.urlencoded({extended: false}));
+        app.use(bodyParser.text({type: '*/*'}));
 
-        server.start({port: 3545}, () => {
+        app.post('/', (request, response, next) => {
+            const json = JSON.parse(request.body);
+            const method = json.method;
+
+            if (methods.hasOwnProperty(method)) {
+                new Promise(resolve => {
+                    const result = methods[method](json.params, request.headers.origin);
+                    resolve(result);
+                }).then(result => response.send(result))
+                    .catch(reason => next(reason));
+            } else {
+                next();
+            }
+        });
+
+        app.listen(port, () => {
             console.log('Signer running on port 3545');
         });
     }
@@ -53,20 +78,26 @@ export default class Signer {
         for (let service of rpcMethods) {
             const map: Map<string, Pair<Function, Object>> = service.getPublicMethods();
             map.forEach((value, key) => {
-                result[key] = (args: any, callback) => {
-                    return new Promise(resolve => {
-                        let client: Client | undefined = undefined;
-                        let arg: any = args.length > 0 ? args[0] : {};
-                        const model: any = Object.assign(value.second, JSON.parse(arg));
+                result[key] = (args: any, origin: string) => {
+                    if (value.second == null || value.second == undefined) {
+                        return value.first();
+                    }
 
-                        if (model instanceof AccessToken) {
-                            client = this.clientService.getClient(model.accessToken);
+                    let client: Client | undefined = undefined;
+                    let arg: any = args.length > 0 ? args[0] : {};
+
+                    const model: any = typeof arg === 'object'
+                        ? Object.assign(value.second, arg)
+                        : arg;
+
+                    if (model instanceof AccessToken) {
+                        client = this.clientService.getClient(model.accessToken);
+                        if (client && client.baseUrl !== origin) {
+                            throw 'access denied';
                         }
+                    }
 
-                        const methodResult = value.first(model, client);
-                        resolve(methodResult);
-
-                    }).then((result) => callback(result));
+                    return value.first(model, client, origin);
                 };
             });
         }

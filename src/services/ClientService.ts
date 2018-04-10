@@ -12,21 +12,46 @@ export default class ClientService implements ServiceRpcMethods {
      */
     private clients: Map<string, Client> = new Map();
     private keyPairHelper: KeyPairHelper;
+    private ownKeyPair: KeyPair;
     private authenticatorAddress: string;
 
-    constructor(keyPairHelper: KeyPairHelper, authenticatorAddress: string) {
+    constructor(keyPairHelper: KeyPairHelper, ownKeyPair: KeyPair, authenticatorAddress: string) {
         this.keyPairHelper = keyPairHelper;
+        this.ownKeyPair = ownKeyPair;
         this.authenticatorAddress = authenticatorAddress;
     }
 
     public getPublicMethods(): Map<string, Pair<Function, Object>> {
-        const map: Map<string, Pair<Function, Object>> = new Map();
+        const map: Map<string, Pair<Function, Object | undefined>> = new Map();
         map.set('registerClient', new Pair(this.registerClient.bind(this), new Auth()));
+        map.set('authenticatorRegisterClient', new Pair(this.authenticatorRegisterClient.bind(this), ''));
+        map.set('getPublicKey', new Pair(this.getPublicKey.bind(this), undefined));
 
         return map;
     }
 
-    public registerClient(auth: Auth, client: Client | undefined): string {
+    public authenticatorRegisterClient(encryptedMessage: string): string {
+        try {
+            const strJsonAuth = this.ownKeyPair.decryptMessage(this.authenticatorAddress, encryptedMessage);
+            const auth: Auth = Object.assign(new Auth(), JSON.stringify(strJsonAuth));
+
+            return this.registerClient(auth);
+
+        } catch (e) {
+            throw 'Wrong auth data!';
+        }
+    }
+
+    public getPublicKey(): string {
+        return this.ownKeyPair.publicKey;
+    }
+
+    public getClient(accessToken: string): Client | undefined {
+        return this.clients.get(accessToken);
+    }
+
+    // todo make private
+    public registerClient(auth: Auth): string {
         const validSig = KeyPair.checkSigMessage(
             auth.getClearAccessToken(),
             this.authenticatorAddress,
@@ -47,10 +72,6 @@ export default class ClientService implements ServiceRpcMethods {
         this.clients.set(auth.accessToken, new Client(keyPair, auth.baseUrl));
 
         return keyPair.getPublicKey();
-    }
-
-    public getClient(accessToken: string): Client | undefined {
-        return this.clients.get(accessToken);
     }
 
 }
