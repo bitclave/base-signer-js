@@ -12,42 +12,56 @@ import EncryptionService from './services/EncryptionService';
 import DecryptionService from './services/DecryptionService';
 import KeyPair from './helpers/keypair/KeyPair';
 import ArgumentUtils from './utils/ArgumentUtils';
+import Auth from './models/Auth';
+import PassPhrase from './models/PassPhrase';
 
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const express = require('express');
 const app = express();
-const port = 3545;
 
 export default class Signer {
 
     public encryptionService: EncryptionService;
     public decryptionService: DecryptionService;
 
+    private authenticator: AuthenticatorService;
     private clientService: ClientService;
     private signerService: SignerService;
 
     constructor() {
-        const passPhrase: string = ArgumentUtils.getValue('-p');
-        // const authenticatorAddress: string = ArgumentUtils.getValue('-a');
+        const port: string = ArgumentUtils.getValue('--port', '3545');
+        const signerPassPhrase: string = ArgumentUtils.getValue('--signerPass', 'signer default pass');
+        const clientPassPhrase: string | undefined = ArgumentUtils.getValue('--clientPass', undefined);
+
+        this.authenticator = new AuthenticatorService();
 
         const keyPairHelper: KeyPairHelper = KeyPairFactory.getDefaultKeyPairCreator();
-        const ownKeyPair: KeyPair = keyPairHelper.createKeyPair(passPhrase);
+        const ownKeyPair: KeyPair = keyPairHelper.createKeyPair(signerPassPhrase);
 
-        const authenticator: AuthenticatorService = new AuthenticatorService();
-        this.clientService = new ClientService(keyPairHelper, ownKeyPair, authenticator.address);
+        const authenticatorAddress: string = ArgumentUtils.getValue('--authAddress', this.authenticator.address);
+
+        this.clientService = new ClientService(keyPairHelper, ownKeyPair, authenticatorAddress);
         this.signerService = new SignerService();
         this.encryptionService = new EncryptionService();
         this.decryptionService = new DecryptionService();
 
         const methods = this.mergeRpcMethods(
-            authenticator,
+            this.authenticator,
             this.clientService,
             this.signerService,
             this.encryptionService,
             this.decryptionService
         );
 
+        this.initService(methods, parseInt(port));
+
+        if (clientPassPhrase) {
+            this.createLocalUser(clientPassPhrase);
+        }
+    }
+
+    private initService(methods: object, port: number) {
         app.use(cors());
         app.use(bodyParser.urlencoded({extended: false}));
         app.use(bodyParser.text({type: '*/*'}));
@@ -59,7 +73,14 @@ export default class Signer {
             if (methods.hasOwnProperty(method)) {
                 new Promise(resolve => {
                     const result = methods[method](json.params, request.headers.origin);
-                    resolve(result);
+
+                    const data: any = {
+                        'jsonrpc': '2.0',
+                        result: result,
+                        id: json.id
+                    };
+
+                    resolve(data);
                 }).then(result => response.send(result))
                     .catch(reason => next(reason));
             } else {
@@ -70,6 +91,17 @@ export default class Signer {
         app.listen(port, () => {
             console.log('Signer running on port 3545');
         });
+    }
+
+    private createLocalUser(pass: string) {
+        const auth: Auth = this.authenticator.generateAccessToken(
+            new PassPhrase(pass),
+            undefined,
+            'http://localhost'
+        );
+        const publicKey = this.clientService.registerClient(auth, true);
+        console.log('access token: ', auth.accessToken);
+        console.log('public key: ', publicKey);
     }
 
     private mergeRpcMethods(...rpcMethods: Array<ServiceRpcMethods>): object {
@@ -92,7 +124,7 @@ export default class Signer {
 
                     if (model instanceof AccessToken) {
                         client = this.clientService.getClient(model.accessToken);
-                        if (client && client.baseUrl !== origin) {
+                        if (client && (client.origin !== origin && !client.local)) {
                             throw 'access denied';
                         }
                     }

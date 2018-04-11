@@ -18,7 +18,7 @@ export default class KeyPair implements MessageSigner, MessageEncrypt, MessageDe
     }
 
     get address(): string {
-        return this._privateKey.toAddress();
+        return this._privateKey.toAddress().toString(16);
     }
 
     get privateKey(): string {

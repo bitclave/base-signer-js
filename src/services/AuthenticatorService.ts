@@ -5,6 +5,7 @@ import Auth from '../models/Auth';
 import PassPhrase from '../models/PassPhrase';
 import Pair from '../models/Pair';
 import Client from '../models/Client';
+import Permissions from '../models/Permissions';
 
 /**
  * This class only for demo and for debug flavor
@@ -24,11 +25,11 @@ export default class AuthenticatorService implements ServiceRpcMethods {
         return map;
     }
 
-    public generateAccessToken(passPhrase: PassPhrase, client: Client, origin: string): Auth {
+    public generateAccessToken(passPhrase: PassPhrase, client: Client | undefined, origin: string): Auth {
         let accessToken: string = this.makeClearAccessToken();
         accessToken += this.keyPair.signMessage(accessToken);
 
-        return new Auth(passPhrase.pass, origin, accessToken);
+        return new Auth(passPhrase.pass, accessToken, origin, '', new Permissions(['email', 'name']));
     }
 
     public get address(): string {

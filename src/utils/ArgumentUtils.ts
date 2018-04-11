@@ -1,6 +1,6 @@
 export default class ArgumentUtils {
 
-    public static getValue(key: string): string {
+    public static getValue(key: string, def: string | undefined = undefined): any {
         const args: Array<string> = process.argv;
         const len: number = args.length;
         for (let i = 0; i < len; i++) {
@@ -10,7 +10,7 @@ export default class ArgumentUtils {
                 return hasNext ? (args[i + 1] || '') : '';
             }
         }
-        return '';
+        return def;
     }
 
 }

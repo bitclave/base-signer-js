@@ -4,6 +4,8 @@ import { KeyPairHelper } from '../helpers/keypair/KeyPairHelper';
 import KeyPair from '../helpers/keypair/KeyPair';
 import { ServiceRpcMethods } from './ServiceRpcMethods';
 import Pair from '../models/Pair';
+import AccessToken from '../models/AccessToken';
+import ClientData from '../models/ClientData';
 
 export default class ClientService implements ServiceRpcMethods {
 
@@ -25,6 +27,7 @@ export default class ClientService implements ServiceRpcMethods {
         const map: Map<string, Pair<Function, Object | undefined>> = new Map();
         map.set('registerClient', new Pair(this.registerClient.bind(this), new Auth()));
         map.set('authenticatorRegisterClient', new Pair(this.authenticatorRegisterClient.bind(this), ''));
+        map.set('checkAccessToken', new Pair(this.checkAccessToken.bind(this), new AccessToken()));
         map.set('getPublicKey', new Pair(this.getPublicKey.bind(this), undefined));
 
         return map;
@@ -50,8 +53,12 @@ export default class ClientService implements ServiceRpcMethods {
         return this.clients.get(accessToken);
     }
 
+    public checkAccessToken(accessToken: AccessToken, client: Client | undefined): ClientData | undefined {
+        return client ? ClientData.valueOf(client) : undefined;
+    }
+
     // todo make private
-    public registerClient(auth: Auth): string {
+    public registerClient(auth: Auth, local: boolean = false): string {
         const validSig = KeyPair.checkSigMessage(
             auth.getClearAccessToken(),
             this.authenticatorAddress,
@@ -59,8 +66,8 @@ export default class ClientService implements ServiceRpcMethods {
         );
 
         if (!validSig ||
-            auth.baseUrl === null ||
-            (auth.baseUrl.indexOf('https://') == -1 && auth.baseUrl.indexOf('http://') == -1) ||
+            auth.origin === null ||
+            (auth.origin.indexOf('https://') == -1 && auth.origin.indexOf('http://') == -1) ||
             auth.passPhrase == null ||
             auth.passPhrase.length < 5
         ) {
@@ -69,7 +76,16 @@ export default class ClientService implements ServiceRpcMethods {
 
         const keyPair: KeyPair = this.keyPairHelper.createKeyPair(auth.passPhrase);
 
-        this.clients.set(auth.accessToken, new Client(keyPair, auth.baseUrl));
+        const client: Client = new Client(
+            keyPair,
+            local,
+            auth.accessToken,
+            auth.origin,
+            auth.expireDate,
+            auth.permissions
+        );
+
+        this.clients.set(auth.accessToken, client);
 
         return keyPair.getPublicKey();
     }

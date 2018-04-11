@@ -23,7 +23,10 @@ export default class EncryptionService implements ServiceRpcMethods {
 
     public generatePasswordForField(fieldPassword: FieldPassword, client: Client | undefined): string {
         if (client != undefined) {
-            return client.keyPair.generatePasswordForFiled(fieldPassword.fieldName);
+            const hasPermission = client.permissions.fields.indexOf(fieldPassword.fieldName) > -1;
+            return hasPermission
+                ? client.keyPair.generatePasswordForFiled(fieldPassword.fieldName)
+                : '';
         }
         throw 'client not found!';
     }

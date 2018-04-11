@@ -1,16 +1,17 @@
-import AccessToken from './AccessToken';
+import AccessData from './AccessData';
+import Permissions from './Permissions';
 
-export default class Auth extends AccessToken {
+export default class Auth extends AccessData {
 
     passPhrase: string;
-    baseUrl: string;
-    expireDate: string;
 
-    constructor(passPhrase: string = '', baseUrl: string = '', accessToken: string = '', expireDate: string = '') {
-        super(accessToken);
+    constructor(passPhrase: string = '',
+                accessToken: string = '',
+                origin: string = '',
+                expireDate: string = '',
+                permissions: Permissions = new Permissions()) {
+        super(accessToken, origin, expireDate, permissions);
         this.passPhrase = passPhrase;
-        this.baseUrl = baseUrl;
-        this.expireDate = expireDate;
     }
 
 }
