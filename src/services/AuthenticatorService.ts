@@ -29,7 +29,9 @@ export default class AuthenticatorService implements ServiceRpcMethods {
         let accessToken: string = this.makeClearAccessToken();
         accessToken += this.keyPair.signMessage(accessToken);
 
-        return new Auth(passPhrase.pass, accessToken, origin, '', new Permissions(['email', 'name']));
+        const permissions = new Permissions(['any']);
+
+        return new Auth(passPhrase.pass, accessToken, origin, '', permissions);
     }
 
     public get address(): string {

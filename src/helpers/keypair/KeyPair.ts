@@ -2,7 +2,6 @@ import { MessageSigner } from './MessageSigner';
 import { MessageEncrypt } from './MessageEncrypt';
 import { MessageDecrypt } from './MessageDecrypt';
 import CryptoUtils from '../CryptoUtils';
-
 import bitcore = require('bitcore-lib');
 import Message = require('bitcore-message');
 import ECIES = require('bitcore-ecies');
@@ -35,8 +34,16 @@ export default class KeyPair implements MessageSigner, MessageEncrypt, MessageDe
         return message.sign(this._privateKey);
     }
 
-    public static checkSigMessage(message: string, address: string, signature: string): boolean {
+    public static checkSig(message: string, address: string, signature: string): boolean {
         return Message(message).verify(address, signature);
+    }
+
+    public checkSig(data: string, sig: string): boolean {
+        try {
+            return KeyPair.checkSig(data, this._privateKey.toAddress(), sig);
+        } catch (e) {
+            return false;
+        }
     }
 
     getPublicKey(): string {
@@ -60,13 +67,18 @@ export default class KeyPair implements MessageSigner, MessageEncrypt, MessageDe
     }
 
     decryptMessage(senderPk: string, encrypted: string): string {
-        const ecies: any = ECIES()
-            .privateKey(this._privateKey)
-            .publicKey(bitcore.PublicKey.fromString(senderPk));
+        try {
+            const ecies: any = ECIES()
+                .privateKey(this._privateKey)
+                .publicKey(bitcore.PublicKey.fromString(senderPk));
 
-        return ecies
-            .decrypt(new Buffer(encrypted, 'base64'))
-            .toString();
+            return ecies
+                .decrypt(new Buffer(encrypted, 'base64'))
+                .toString();
+
+        } catch (e) {
+            return encrypted;
+        }
     }
 
 }

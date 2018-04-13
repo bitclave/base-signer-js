@@ -72,7 +72,11 @@ export default class Signer {
 
             if (methods.hasOwnProperty(method)) {
                 new Promise(resolve => {
-                    const result = methods[method](json.params, request.headers.origin);
+                    const origin: string = (request.headers.origin === undefined)
+                        ? 'http://localhost'
+                        : request.headers.origin;
+
+                    const result = methods[method](json.params, origin);
 
                     const data: any = {
                         'jsonrpc': '2.0',
@@ -89,7 +93,7 @@ export default class Signer {
         });
 
         app.listen(port, () => {
-            console.log('Signer running on port 3545');
+            console.log('Signer running on port', port);
         });
     }
 

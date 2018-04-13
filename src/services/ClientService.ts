@@ -59,7 +59,7 @@ export default class ClientService implements ServiceRpcMethods {
 
     // todo make private
     public registerClient(auth: Auth, local: boolean = false): string {
-        const validSig = KeyPair.checkSigMessage(
+        const validSig = KeyPair.checkSig(
             auth.getClearAccessToken(),
             this.authenticatorAddress,
             auth.getAccessTokenSig()

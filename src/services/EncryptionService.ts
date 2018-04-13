@@ -23,7 +23,9 @@ export default class EncryptionService implements ServiceRpcMethods {
 
     public generatePasswordForField(fieldPassword: FieldPassword, client: Client | undefined): string {
         if (client != undefined) {
-            const hasPermission = client.permissions.fields.indexOf(fieldPassword.fieldName) > -1;
+            const hasPermission = client.permissions.fields.indexOf(fieldPassword.fieldName) > -1
+                || client.permissions.fields.indexOf('any') > -1;
+
             return hasPermission
                 ? client.keyPair.generatePasswordForFiled(fieldPassword.fieldName)
                 : '';
