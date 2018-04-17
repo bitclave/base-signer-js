@@ -6,21 +6,24 @@ import { ServiceRpcMethods } from './ServiceRpcMethods';
 import Pair from '../models/Pair';
 import AccessToken from '../models/AccessToken';
 import ClientData from '../models/ClientData';
+import bitcore = require('bitcore-lib');
 
 export default class ClientService implements ServiceRpcMethods {
 
-    /**
-     * string - hash from accessToken
-     */
     private clients: Map<string, Client> = new Map();
     private keyPairHelper: KeyPairHelper;
     private ownKeyPair: KeyPair;
+    private authenticatorPK: string;
     private authenticatorAddress: string;
 
-    constructor(keyPairHelper: KeyPairHelper, ownKeyPair: KeyPair, authenticatorAddress: string) {
+    constructor(keyPairHelper: KeyPairHelper, ownKeyPair: KeyPair, authenticatorPublicKey: string) {
         this.keyPairHelper = keyPairHelper;
         this.ownKeyPair = ownKeyPair;
-        this.authenticatorAddress = authenticatorAddress;
+        this.authenticatorPK = authenticatorPublicKey;
+        this.authenticatorAddress = bitcore.PublicKey
+            .fromString(authenticatorPublicKey)
+            .toAddress()
+            .toString(16);
     }
 
     public getPublicMethods(): Map<string, Pair<Function, Object>> {
@@ -35,12 +38,13 @@ export default class ClientService implements ServiceRpcMethods {
 
     public authenticatorRegisterClient(encryptedMessage: string): string {
         try {
-            const strJsonAuth = this.ownKeyPair.decryptMessage(this.authenticatorAddress, encryptedMessage);
-            const auth: Auth = Object.assign(new Auth(), JSON.stringify(strJsonAuth));
+            const strJsonAuth = this.ownKeyPair.decryptMessage(this.authenticatorPK, encryptedMessage);
+            const auth: Auth = Object.assign(new Auth(), JSON.parse(strJsonAuth));
 
             return this.registerClient(auth);
 
         } catch (e) {
+            console.log(e);
             throw 'Wrong auth data!';
         }
     }

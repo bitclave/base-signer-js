@@ -77,6 +77,7 @@ export default class KeyPair implements MessageSigner, MessageEncrypt, MessageDe
                 .toString();
 
         } catch (e) {
+            console.log(e);
             return encrypted;
         }
     }

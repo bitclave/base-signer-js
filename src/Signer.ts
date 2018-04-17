@@ -4,7 +4,6 @@ import SignerService from './services/SignerService';
 import { KeyPairHelper } from './helpers/keypair/KeyPairHelper';
 import KeyPairFactory from './helpers/keypair/KeyPairFactory';
 import { ServiceRpcMethods } from './services/ServiceRpcMethods';
-import AuthenticatorService from './services/AuthenticatorService';
 import Pair from './models/Pair';
 import Client from './models/Client';
 import AccessToken from './models/AccessToken';
@@ -12,8 +11,6 @@ import EncryptionService from './services/EncryptionService';
 import DecryptionService from './services/DecryptionService';
 import KeyPair from './helpers/keypair/KeyPair';
 import ArgumentUtils from './utils/ArgumentUtils';
-import Auth from './models/Auth';
-import PassPhrase from './models/PassPhrase';
 
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -25,7 +22,6 @@ export default class Signer {
     public encryptionService: EncryptionService;
     public decryptionService: DecryptionService;
 
-    private authenticator: AuthenticatorService;
     private clientService: ClientService;
     private signerService: SignerService;
 
@@ -34,20 +30,17 @@ export default class Signer {
         const signerPassPhrase: string = ArgumentUtils.getValue('--signerPass', 'signer default pass');
         const clientPassPhrase: string | undefined = ArgumentUtils.getValue('--clientPass', undefined);
 
-        this.authenticator = new AuthenticatorService();
-
         const keyPairHelper: KeyPairHelper = KeyPairFactory.getDefaultKeyPairCreator();
         const ownKeyPair: KeyPair = keyPairHelper.createKeyPair(signerPassPhrase);
 
-        const authenticatorAddress: string = ArgumentUtils.getValue('--authAddress', this.authenticator.address);
+        const authenticatorPublicKey: string = ArgumentUtils.getValue('--authPK');
 
-        this.clientService = new ClientService(keyPairHelper, ownKeyPair, authenticatorAddress);
+        this.clientService = new ClientService(keyPairHelper, ownKeyPair, authenticatorPublicKey);
         this.signerService = new SignerService();
         this.encryptionService = new EncryptionService();
         this.decryptionService = new DecryptionService();
 
         const methods = this.mergeRpcMethods(
-            this.authenticator,
             this.clientService,
             this.signerService,
             this.encryptionService,
@@ -98,14 +91,7 @@ export default class Signer {
     }
 
     private createLocalUser(pass: string) {
-        const auth: Auth = this.authenticator.generateAccessToken(
-            new PassPhrase(pass),
-            undefined,
-            'http://localhost'
-        );
-        const publicKey = this.clientService.registerClient(auth, true);
-        console.log('access token: ', auth.accessToken);
-        console.log('public key: ', publicKey);
+        // todo create local client
     }
 
     private mergeRpcMethods(...rpcMethods: Array<ServiceRpcMethods>): object {
