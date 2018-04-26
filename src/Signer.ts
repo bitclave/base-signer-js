@@ -35,6 +35,13 @@ export default class Signer {
 
         const authenticatorPublicKey: string = ArgumentUtils.getValue('AUTHENTICATOR_PK', '--authPK');
 
+        if (authenticatorPublicKey === undefined ||
+            authenticatorPublicKey === null ||
+            authenticatorPublicKey.length === 0) {
+            throw 'For run Signer need authenticator public key! For setup use' +
+            ' "environment": "AUTHENTICATOR_PK" or "command arguments": "--authPK"'
+        }
+
         this.clientService = new ClientService(keyPairHelper, ownKeyPair, authenticatorPublicKey);
         this.signerService = new SignerService();
         this.encryptionService = new EncryptionService();
