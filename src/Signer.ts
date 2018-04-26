@@ -26,14 +26,14 @@ export default class Signer {
     private signerService: SignerService;
 
     constructor() {
-        const port: string = ArgumentUtils.getValue('--port', '3545');
-        const signerPassPhrase: string = ArgumentUtils.getValue('--signerPass', 'signer default pass');
-        const clientPassPhrase: string | undefined = ArgumentUtils.getValue('--clientPass', undefined);
+        const port: string = ArgumentUtils.getValue('LISTEN_PORT','--port', '3545');
+        const signerPassPhrase: string = ArgumentUtils.getValue('PASS_PHRASE', '--signerPass', 'signer default pass');
+        const clientPassPhrase: string | undefined = ArgumentUtils.getValue('LOCAL_CLIENT_PASS', '--clientPass', undefined);
 
         const keyPairHelper: KeyPairHelper = KeyPairFactory.getDefaultKeyPairCreator();
         const ownKeyPair: KeyPair = keyPairHelper.createKeyPair(signerPassPhrase);
 
-        const authenticatorPublicKey: string = ArgumentUtils.getValue('--authPK');
+        const authenticatorPublicKey: string = ArgumentUtils.getValue('AUTHENTICATOR_PK', '--authPK');
 
         this.clientService = new ClientService(keyPairHelper, ownKeyPair, authenticatorPublicKey);
         this.signerService = new SignerService();
