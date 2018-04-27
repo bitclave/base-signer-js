@@ -51,7 +51,7 @@ export default class KeyPair implements MessageSigner, MessageEncrypt, MessageDe
     }
 
     encryptMessage(recipientPk: string, message: string): string {
-        const ecies: any = ECIES()
+        const ecies: any = ECIES({noKey: true})
             .privateKey(this._privateKey)
             .publicKey(bitcore.PublicKey.fromString(recipientPk));
 
@@ -68,7 +68,7 @@ export default class KeyPair implements MessageSigner, MessageEncrypt, MessageDe
 
     decryptMessage(senderPk: string, encrypted: string): string {
         try {
-            const ecies: any = ECIES()
+            const ecies: any = ECIES({noKey: true})
                 .privateKey(this._privateKey)
                 .publicKey(bitcore.PublicKey.fromString(senderPk));
 
