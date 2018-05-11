@@ -1,6 +1,5 @@
-import KeyPair from '../helpers/keypair/KeyPair';
+import { KeyPair } from '../helpers/keypair/KeyPair';
 import AccessData from './AccessData';
-import Permissions from './Permissions';
 
 export default class Client extends AccessData {
 
@@ -11,9 +10,9 @@ export default class Client extends AccessData {
                 local: boolean = false,
                 accessToken: string = '',
                 origin: string = '',
-                expireDate: string = '',
-                permissions: Permissions = new Permissions()) {
-        super(accessToken, origin, expireDate, permissions);
+                expireDate: string = '') {
+
+        super(accessToken, origin, expireDate);
 
         this.keyPair = keyPair;
         this.local = local;

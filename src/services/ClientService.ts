@@ -1,11 +1,12 @@
 import Client from '../models/Client';
 import Auth from '../models/Auth';
 import { KeyPairHelper } from '../helpers/keypair/KeyPairHelper';
-import KeyPair from '../helpers/keypair/KeyPair';
+import { KeyPair } from '../helpers/keypair/KeyPair';
 import { ServiceRpcMethods } from './ServiceRpcMethods';
 import Pair from '../models/Pair';
 import AccessToken from '../models/AccessToken';
 import ClientData from '../models/ClientData';
+import KeyPairSimple from '../helpers/keypair/KeyPairSimple';
 import bitcore = require('bitcore-lib');
 
 export default class ClientService implements ServiceRpcMethods {
@@ -50,7 +51,7 @@ export default class ClientService implements ServiceRpcMethods {
     }
 
     public getPublicKey(): string {
-        return this.ownKeyPair.publicKey;
+        return this.ownKeyPair.getPublicKey();
     }
 
     public getClient(accessToken: string): Client | undefined {
@@ -63,7 +64,7 @@ export default class ClientService implements ServiceRpcMethods {
 
     // todo make private
     public registerClient(auth: Auth, local: boolean = false): string {
-        const validSig = KeyPair.checkSig(
+        const validSig = KeyPairSimple.checkSig(
             auth.getClearAccessToken(),
             this.authenticatorAddress,
             auth.getAccessTokenSig()
@@ -78,15 +79,14 @@ export default class ClientService implements ServiceRpcMethods {
             throw 'Wrong auth data!';
         }
 
-        const keyPair: KeyPair = this.keyPairHelper.createKeyPair(auth.passPhrase);
+        const keyPair: KeyPair = this.keyPairHelper.createClientKeyPair(auth.passPhrase, auth.origin);
 
         const client: Client = new Client(
             keyPair,
             local,
             auth.accessToken,
             auth.origin,
-            auth.expireDate,
-            auth.permissions
+            auth.expireDate
         );
 
         this.clients.set(auth.accessToken, client);

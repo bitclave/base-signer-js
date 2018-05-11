@@ -2,15 +2,15 @@
 import ClientService from './services/ClientService';
 import SignerService from './services/SignerService';
 import { KeyPairHelper } from './helpers/keypair/KeyPairHelper';
-import KeyPairFactory from './helpers/keypair/KeyPairFactory';
 import { ServiceRpcMethods } from './services/ServiceRpcMethods';
 import Pair from './models/Pair';
 import Client from './models/Client';
 import AccessToken from './models/AccessToken';
 import EncryptionService from './services/EncryptionService';
 import DecryptionService from './services/DecryptionService';
-import KeyPair from './helpers/keypair/KeyPair';
+import { KeyPair } from './helpers/keypair/KeyPair';
 import ArgumentUtils from './utils/ArgumentUtils';
+import KeyPairHelperImpl from './helpers/keypair/KeyPairHelperImpl';
 
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -26,12 +26,13 @@ export default class Signer {
     private signerService: SignerService;
 
     constructor() {
-        const port: string = ArgumentUtils.getValue('LISTEN_PORT','--port', '3545');
+        const port: string = ArgumentUtils.getValue('LISTEN_PORT', '--port', '3545');
         const signerPassPhrase: string = ArgumentUtils.getValue('PASS_PHRASE', '--signerPass', 'signer default pass');
         const clientPassPhrase: string | undefined = ArgumentUtils.getValue('LOCAL_CLIENT_PASS', '--clientPass', undefined);
+        const nodeHost: string = ArgumentUtils.getValue('HOST_NODE', '--host', '');
 
-        const keyPairHelper: KeyPairHelper = KeyPairFactory.getDefaultKeyPairCreator();
-        const ownKeyPair: KeyPair = keyPairHelper.createKeyPair(signerPassPhrase);
+        const keyPairHelper: KeyPairHelper = new KeyPairHelperImpl(nodeHost);
+        const ownKeyPair: KeyPair = keyPairHelper.createSimpleKeyPair(signerPassPhrase);
 
         const authenticatorPublicKey: string = ArgumentUtils.getValue('AUTHENTICATOR_PK', '--authPK');
 
@@ -39,7 +40,7 @@ export default class Signer {
             authenticatorPublicKey === null ||
             authenticatorPublicKey.length === 0) {
             throw 'For run Signer need authenticator public key! For setup use' +
-            ' "environment": "AUTHENTICATOR_PK" or "command arguments": "--authPK"'
+            ' "environment": "AUTHENTICATOR_PK" or "command arguments": "--authPK"';
         }
 
         this.clientService = new ClientService(keyPairHelper, ownKeyPair, authenticatorPublicKey);

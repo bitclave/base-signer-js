@@ -1,7 +1,11 @@
+import { AccessRight } from '../../models/Permissions';
+
 export interface MessageEncrypt {
 
-    encryptMessage(recipientPk: string, message: string) : string;
+    encryptMessage(recipientPk: string, message: string): string;
 
-    generatePasswordForFiled(fieldName: String): string;
+    encryptFields(fields: Map<string, string>): Map<string, string>;
+
+    encryptPermissionsFields(recipient: string, data: Map<string, AccessRight>): string;
 
 }

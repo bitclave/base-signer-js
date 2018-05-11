@@ -83,6 +83,7 @@
     "ts-node-dev": "^1.0.0-pre.18",
     "typescript": "^2.7.1",
     "webpack": "^4.1.1",
-    "webpack-cli": "^2.0.12"
+    "webpack-cli": "^2.0.12",
+    "xmlhttprequest": "^1.8.0"
   }
 }

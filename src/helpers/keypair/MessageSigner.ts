@@ -4,6 +4,4 @@ export interface MessageSigner {
 
     checkSig(data: any, sig: string): boolean
 
-    getPublicKey(): string
-
 }
