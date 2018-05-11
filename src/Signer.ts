@@ -31,6 +31,13 @@ export default class Signer {
         const clientPassPhrase: string | undefined = ArgumentUtils.getValue('LOCAL_CLIENT_PASS', '--clientPass', undefined);
         const nodeHost: string = ArgumentUtils.getValue('HOST_NODE', '--host', '');
 
+        if (!nodeHost ||
+            nodeHost.length == 0 ||
+            nodeHost.indexOf('http') === -1) {
+            throw 'For run Signer need setup node host! For setup use' +
+            ' "environment": "HOST_NODE" or "command arguments": "--host" ';
+        }
+
         const keyPairHelper: KeyPairHelper = new KeyPairHelperImpl(nodeHost);
         const ownKeyPair: KeyPair = keyPairHelper.createSimpleKeyPair(signerPassPhrase);
 
