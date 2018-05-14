@@ -113,7 +113,7 @@ export default class Signer {
         const result: any = {};
 
         for (let service of rpcMethods) {
-            const map: Map<string, Pair<Function, Object>> = service.getPublicMethods();
+            const map: Map<string, Pair<Function, any>> = service.getPublicMethods();
             map.forEach((value, key) => {
                 result[key] = (args: any, origin: string) => {
                     if (value.second == null || value.second == undefined) {
@@ -123,8 +123,8 @@ export default class Signer {
                     let client: Client | undefined = undefined;
                     let arg: any = args.length > 0 ? args[0] : {};
 
-                    const model: any = typeof arg === 'object'
-                        ? Object.assign(value.second, arg)
+                    const model: any = typeof arg != null && typeof value.second != 'string'
+                        ? Object.assign(new value.second(), arg)
                         : arg;
 
                     if (model instanceof AccessToken) {

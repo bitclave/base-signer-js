@@ -27,12 +27,12 @@ export default class ClientService implements ServiceRpcMethods {
             .toString(16);
     }
 
-    public getPublicMethods(): Map<string, Pair<Function, Object>> {
-        const map: Map<string, Pair<Function, Object | undefined>> = new Map();
-        map.set('registerClient', new Pair(this.registerClient.bind(this), new Auth()));
+    public getPublicMethods(): Map<string, Pair<Function, any>> {
+        const map: Map<string, Pair<Function, any>> = new Map();
+        map.set('registerClient', new Pair(this.registerClient.bind(this), Auth));
         map.set('authenticatorRegisterClient', new Pair(this.authenticatorRegisterClient.bind(this), ''));
-        map.set('checkAccessToken', new Pair(this.checkAccessToken.bind(this), new AccessToken()));
-        map.set('getPublicKey', new Pair(this.getPublicKey.bind(this), undefined));
+        map.set('checkAccessToken', new Pair(this.checkAccessToken.bind(this), AccessToken));
+        map.set('getPublicKey', new Pair(this.getPublicKey.bind(this), null));
 
         return map;
     }

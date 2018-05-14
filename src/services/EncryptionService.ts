@@ -8,11 +8,11 @@ import JsonUtils from '../helpers/JsonUtils';
 
 export default class EncryptionService implements ServiceRpcMethods {
 
-    public getPublicMethods(): Map<string, Pair<Function, Object>> {
-        const map: Map<string, Pair<Function, Object>> = new Map();
-        map.set('encryptMessage', new Pair(this.encryptMessage.bind(this), new EncryptMessage()));
-        map.set('encryptFields', new Pair(this.encryptFields.bind(this), new DecryptEncryptFields()));
-        map.set('encryptPermissionsFields', new Pair(this.encryptPermissionsFields.bind(this), new PermissionsFields()));
+    public getPublicMethods(): Map<string, Pair<Function, any>> {
+        const map: Map<string, Pair<Function, any>> = new Map();
+        map.set('encryptMessage', new Pair(this.encryptMessage.bind(this), EncryptMessage));
+        map.set('encryptFields', new Pair(this.encryptFields.bind(this), DecryptEncryptFields));
+        map.set('encryptPermissionsFields', new Pair(this.encryptPermissionsFields.bind(this), PermissionsFields));
 
         return map;
     }

@@ -6,10 +6,10 @@ import CheckSignature from '../models/CheckSignature';
 
 export default class SignerService implements ServiceRpcMethods {
 
-    public getPublicMethods(): Map<string, Pair<Function, Object>> {
-        const map: Map<string, Pair<Function, Object>> = new Map();
-        map.set('signMessage', new Pair(this.signMessage.bind(this), new SignMessage()));
-        map.set('checkSig', new Pair(this.checkSig.bind(this), new CheckSignature()));
+    public getPublicMethods(): Map<string, Pair<Function, any>> {
+        const map: Map<string, Pair<Function, any>> = new Map();
+        map.set('signMessage', new Pair(this.signMessage.bind(this), SignMessage));
+        map.set('checkSig', new Pair(this.checkSig.bind(this), CheckSignature));
 
         return map;
     }
