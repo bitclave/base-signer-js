@@ -11,6 +11,9 @@ import DecryptionService from './services/DecryptionService';
 import { KeyPair } from './helpers/keypair/KeyPair';
 import ArgumentUtils from './utils/ArgumentUtils';
 import KeyPairHelperImpl from './helpers/keypair/KeyPairHelperImpl';
+import { StringUtils } from './utils/StringUtils';
+import { Configurator } from './helpers/console/Configurator';
+import Authenticator from './helpers/Authenticator';
 
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -26,10 +29,44 @@ export default class Signer {
     private signerService: SignerService;
 
     constructor() {
+        const useLocal: string = ArgumentUtils.getValue('USE_LOCAL', '--useLocal', 'false');
+
+        if (!useLocal || useLocal != 'true') {
+            this.initRemote();
+        } else {
+            this.initLocal();
+        }
+    }
+
+    private initRemote() {
         const port: string = ArgumentUtils.getValue('LISTEN_PORT', '--port', '3545');
-        const signerPassPhrase: string = ArgumentUtils.getValue('PASS_PHRASE', '--signerPass', 'signer default pass');
-        const clientPassPhrase: string | undefined = ArgumentUtils.getValue('LOCAL_CLIENT_PASS', '--clientPass', undefined);
         const nodeHost: string = ArgumentUtils.getValue('HOST_NODE', '--host', '');
+        const signerPassPhrase: string = ArgumentUtils.getValue('PASS_PHRASE', '--signerPass', 'signer default pass');
+        const authenticatorPublicKey: string = ArgumentUtils.getValue('AUTHENTICATOR_PK', '--authPK');
+
+        this.init(false, parseInt(port), nodeHost, signerPassPhrase, authenticatorPublicKey);
+    }
+
+    private initLocal() {
+        Configurator.prepareConfiguration().then((result: Map<string, string>) => {
+            const port: number = parseInt(result.get('port') || '0');
+            const nodeHost: string = result.get('node') || '';
+            const clientPassPhrase: string = result.get('mnemonic') || '';
+
+            this.init(true, port, nodeHost, '', '', clientPassPhrase);
+        });
+    }
+
+    private init(useLocal: boolean,
+                 port: number,
+                 nodeHost: string,
+                 signerPassPhrase: string,
+                 authenticatorPublicKey?: string,
+                 clientPassPhrase?: string) {
+
+        if (port <= 0) {
+            throw `invalid port number: ${port}`;
+        }
 
         if (!nodeHost ||
             nodeHost.length == 0 ||
@@ -39,9 +76,17 @@ export default class Signer {
         }
 
         const keyPairHelper: KeyPairHelper = new KeyPairHelperImpl(nodeHost);
-        const ownKeyPair: KeyPair = keyPairHelper.createSimpleKeyPair(signerPassPhrase);
 
-        const authenticatorPublicKey: string = ArgumentUtils.getValue('AUTHENTICATOR_PK', '--authPK');
+        let authenticatorKeyPair: KeyPair | undefined;
+
+        if (useLocal) {
+            authenticatorKeyPair = keyPairHelper.createSimpleKeyPair(StringUtils.generateString());
+            authenticatorPublicKey = authenticatorKeyPair.getPublicKey();
+
+            signerPassPhrase = StringUtils.generateString();
+        }
+
+        const ownKeyPair: KeyPair = keyPairHelper.createSimpleKeyPair(signerPassPhrase);
 
         if (authenticatorPublicKey === undefined ||
             authenticatorPublicKey === null ||
@@ -62,10 +107,11 @@ export default class Signer {
             this.decryptionService
         );
 
-        this.initService(methods, parseInt(port));
+        this.initService(methods, port);
 
-        if (clientPassPhrase) {
-            this.createLocalUser(clientPassPhrase);
+        if (clientPassPhrase && authenticatorKeyPair) {
+            const authenticator: Authenticator = new Authenticator(authenticatorKeyPair);
+            this.clientService.registerClient(authenticator.prepareAuth(clientPassPhrase), true);
         }
     }
 
@@ -103,10 +149,6 @@ export default class Signer {
         app.listen(port, () => {
             console.log('Signer running on port', port);
         });
-    }
-
-    private createLocalUser(pass: string) {
-        // todo create local client
     }
 
     private mergeRpcMethods(...rpcMethods: Array<ServiceRpcMethods>): object {
