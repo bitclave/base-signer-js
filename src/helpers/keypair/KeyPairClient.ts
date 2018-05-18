@@ -34,8 +34,9 @@ export default class KeyPairClient extends KeyPairSimple {
     }
 
     encryptPermissionsFields(recipient: string, data: Map<string, AccessRight>): string {
+        const resultMap: Map<string, AcceptedField> = new Map();
+
         if (data != null && data.size > 0) {
-            const resultMap: Map<string, AcceptedField> = new Map();
             let pass: string;
 
             this.syncPermissions();
@@ -48,13 +49,11 @@ export default class KeyPairClient extends KeyPairSimple {
                 pass = this.generatePasswordForField(key.toLowerCase());
                 resultMap.set(key, new AcceptedField(pass, value));
             }
-
-            const jsonMap: any = JsonUtils.mapToJson(resultMap);
-
-            return this.encryptMessage(recipient, JSON.stringify(jsonMap));
         }
 
-        return '';
+        const jsonMap: any = JsonUtils.mapToJson(resultMap);
+
+        return this.encryptMessage(recipient, JSON.stringify(jsonMap));
     }
 
     decryptFields(fields: Map<string, string>): Map<string, string> {
