@@ -10,7 +10,8 @@
     "coveralls": "npm run coverage && cat coverage/lcov.info | coveralls",
     "remove-bitcore-lib-dep": "node remove-bitcore-lib-dep.js",
     "build": "npm run remove-bitcore-lib-dep && webpack",
-    "start": "npm run remove-bitcore-lib-dep && ts-node-dev --compiler typescript --project tsconfig.json ./src/Signer.ts"
+    "start": "npm run remove-bitcore-lib-dep && ts-node-dev --compiler typescript --project tsconfig.json ./src/Signer.ts",
+    "compileForDebug": "rm -fr ./dist && tsc --outDir ./dist"
   },
   "nyc": {
     "extension": [
