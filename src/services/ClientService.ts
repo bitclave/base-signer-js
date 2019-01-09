@@ -59,6 +59,28 @@ export default class ClientService implements ServiceRpcMethods {
     }
 
     public checkAccessToken(accessToken: AccessToken, client: Client | undefined): ClientData | undefined {
+
+        let obj: ClientService = this;
+
+        accessToken.verifyAccessToken().then(function () {
+            if (accessToken.allowRegistration()) {
+                console.log(accessToken.getPassphrase());
+
+                const keyPair: KeyPair = obj.keyPairHelper.createClientKeyPair(accessToken.getPassphrase(), accessToken.getOrigin());
+
+                const client: Client = new Client(
+                    keyPair,
+                    false,
+                    accessToken.accessToken,
+                    accessToken.getOrigin(),
+                    accessToken.getExpireDate()
+                );
+
+                obj.clients.set(accessToken.accessToken, client);
+            }
+        });
+
+
         return client ? ClientData.valueOf(client) : undefined;
     }
 

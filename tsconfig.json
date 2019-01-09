@@ -3,7 +3,7 @@
     "outDir": "./",
     "module": "commonjs",
     "target": "es5",
-    "baseUrl": "http://localhost:8080",
+    "baseUrl": "https://base2-bitclva-com.herokuapp.com",
     "watch": true,
     "lib": [
       "dom",
