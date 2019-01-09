@@ -7,15 +7,21 @@ import {TokenExpiredError} from "jsonwebtoken";
 export default class AccessToken {
 
     accessToken: string;
-    isJWT: boolean = false;
-    isValid: boolean = false;
-    data: any;
-    certs: any = null;
+    private isJWT: boolean = false;
+    private isValid: boolean = false;
+    private data: any;
+    private certs: any = null;
+    protected verified: boolean = false;
+
+    protected signerAllowedIssuer: string = ArgumentUtils.getValue('VALID_TOKEN_ISSUER', '--tokenIssuer', 'https://baseauth.bitclave.com:8443/auth/realms/BASE');
+    protected signerIgnoreJWTExpiry: string = ArgumentUtils.getValue('IGNORE_TOKEN_EXPIRATION', '--tokenExpiration', 'false');
 
     constructor(accessToken: string = '') {
         this.accessToken = accessToken;
+    }
 
-        this.verifyAccessToken();
+    public badOrExpired(): boolean {
+        return this.isJWT && !this.isValid;
     }
 
     public allowRegistration(): boolean {
@@ -30,22 +36,29 @@ export default class AccessToken {
         return "";
     }
 
-    private getCerts(after) {
+    protected getCerts(after: any = null) {
         let obj = this;
 
-        let uri = obj.data.iss + '/protocol/openid-connect/certs';
+        if (obj.certs === null) {
+            let uri = obj.signerAllowedIssuer + '/protocol/openid-connect/certs';
 
-        request.get(
-            {
-                uri: uri
-            }, function (error, response, body) {
-                obj.certs = JSON.parse(response.body);
+            request.get(
+                {
+                    uri: uri
+                }, function (error, response, body) {
+                    obj.certs = JSON.parse(response.body);
 
+                    if (after !== null)
+                        after();
+                });
+        }
+        else {
+            if (after !== null)
                 after();
-            });
+        }
     }
 
-    private verifyJWT(token, tokenObject, ignoreExpriation = false) {
+    protected verifyJWT(token, tokenObject, ignoreExpriation = false) {
         let signature_pem: string = "";
 
         for (let key of this.certs.keys) {
@@ -63,32 +76,39 @@ export default class AccessToken {
             if (expiredError instanceof TokenExpiredError)
                 console.log("Token expired at: " + expiredError.expiredAt);
         }
+
+        this.verified = true;
     }
 
-    private verifyAccessToken(): void {
-        const signerAllowedIssuer: string = ArgumentUtils.getValue('VALID_TOKEN_ISSUER', '--tokenIssuer', 'https://baseauth.bitclave.com:8443/auth/realms/BASE');
-        const signerIgnoreJWTExpirations: string = ArgumentUtils.getValue('IGNORE_TOKEN_EXPIRATION', '--tokenExpiration', 'false');
+    public verifyAccessToken(): Promise<void> {
+        let obj: any = this;
 
-        if (this.accessToken !== null) {
-            let tokenObject: any = jwt.decode(this.accessToken, {complete: true});
+        return new Promise(function(resolve, reject) {
+            if (!obj.verified) {
+                if (obj.accessToken !== null) {
+                    let tokenObject: any = jwt.decode(obj.accessToken, {complete: true});
 
-            if (tokenObject !== null) {
-                this.isJWT = true;
-                let obj = this;
+                    if (tokenObject !== null) {
+                        obj.isJWT = true;
+                        obj.data = tokenObject.payload;
 
-                obj.data = tokenObject.payload;
+                        if (obj.data !== null) {
+                            let iss: string = obj.data.iss;
 
-                if (obj.data !== null) {
-                    let iss:string = obj.data.iss;
-
-                    if (signerAllowedIssuer === iss) {
-                        this.getCerts(function () {
-                            obj.verifyJWT(obj.accessToken, tokenObject, signerIgnoreJWTExpirations === "true");
-                        })
+                            if (obj.signerAllowedIssuer === iss) {
+                                obj.getCerts(function () {
+                                    obj.verifyJWT(obj.accessToken, tokenObject, obj.signerIgnoreJWTExpiry === "true");
+                                    resolve();
+                                });
+                            }
+                        }
                     }
                 }
             }
-        }
+            else {
+                resolve();
+            }
+        });
     }
 
     public getAccessTokenSig(): string {
@@ -99,4 +119,13 @@ export default class AccessToken {
         return this.accessToken.substring(0, 32);
     }
 
+    getOrigin() {
+        // TODO load from token
+        return "";
+    }
+
+    getExpireDate() {
+        // TODO load from token
+        return "";
+    }
 }
