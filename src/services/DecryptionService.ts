@@ -24,7 +24,8 @@ export default class DecryptionService implements ServiceRpcMethods {
 
     public decryptFields(data: DecryptEncryptFields, client: Client | undefined): any {
         if (client != undefined) {
-            const resultMap: Map<string, string> = client.keyPair.decryptFields(JsonUtils.jsonToMap(data.fields));
+            const resultMap: Map<string, string> =
+                client.keyPair.decryptFields(JsonUtils.jsonToMap(data.fields), JsonUtils.jsonToMap(data.passwords));
 
             return JsonUtils.mapToJson(resultMap);
         }
