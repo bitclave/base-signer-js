@@ -30,15 +30,13 @@ export default class KeyPairClient extends KeyPairSimple {
     }
 
     encryptFields(fields: Map<string, string>): Map<string, string> {
-        return this.prepareData(fields, true);
+        return this.prepareData(fields, true, new Map());
     }
 
     encryptPermissionsFields(recipient: string, data: Map<string, AccessRight>): string {
         const resultMap: Map<string, AcceptedField> = new Map();
 
         if (data != null && data.size > 0) {
-            let pass: string;
-
             this.syncPermissions();
 
             for (let [key, value] of data.entries()) {
@@ -46,7 +44,7 @@ export default class KeyPairClient extends KeyPairSimple {
                     continue;
                 }
 
-                pass = this.generatePasswordForField(key.toLowerCase());
+                const pass = this.generatePasswordForField(key.toLowerCase());
                 resultMap.set(key, new AcceptedField(pass, value));
             }
         }
@@ -56,14 +54,16 @@ export default class KeyPairClient extends KeyPairSimple {
         return this.encryptMessage(recipient, JSON.stringify(jsonMap));
     }
 
-    decryptFields(fields: Map<string, string>): Map<string, string> {
-        return this.prepareData(fields, false);
+    decryptFields(fields: Map<string, string>, passwords?: Map<string, string>): Map<string, string> {
+        return this.prepareData(fields, false, passwords || new Map());
     }
 
-    private prepareData(data: Map<string, string>, encrypt: boolean): Map<string, string> {
+    private prepareData(
+        data: Map<string, string>,
+        encrypt: boolean,
+        passwords: Map<string, string>
+    ): Map<string, string> {
         const result: Map<string, string> = new Map<string, string>();
-        let pass: string;
-        let changedValue: string;
 
         this.syncPermissions();
 
@@ -72,9 +72,9 @@ export default class KeyPairClient extends KeyPairSimple {
                 continue;
             }
 
-            pass = this.generatePasswordForField(key);
+            const pass = passwords.has(key) ? passwords.get(key) : this.generatePasswordForField(key);
             if (pass != null && pass != undefined && pass.length > 0) {
-                changedValue = encrypt
+                const changedValue = encrypt
                     ? CryptoUtils.encryptAes256(value, pass)
                     : CryptoUtils.decryptAes256(value, pass);
 
