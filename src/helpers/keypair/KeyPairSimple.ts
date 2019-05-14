@@ -68,7 +68,7 @@ export default class KeyPairSimple implements KeyPair {
                 .publicKey(bitcore.PublicKey.fromString(senderPk));
 
             return ecies
-                .decrypt(new Buffer(encrypted, 'base64'))
+                .decrypt(Buffer.from(encrypted, 'base64'))
                 .toString();
         } catch (e) {
             return encrypted;
