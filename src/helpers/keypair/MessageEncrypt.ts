@@ -8,4 +8,5 @@ export interface MessageEncrypt {
 
     encryptPermissionsFields(recipient: string, data: Map<string, AccessRight>): string;
 
+    encryptFieldsWithPermissions(recipient: string, data: Map<string, AccessRight>): Map<string, string>;
 }

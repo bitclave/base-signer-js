@@ -54,11 +54,15 @@ export default class KeyPairSimple implements KeyPair {
     }
 
     encryptFields(fields: Map<string, string>): Map<string, string> {
-        throw 'not implemented';
+        throw new Error('not implemented');
     }
 
     encryptPermissionsFields(recipient: string, data: Map<string, AccessRight>): string {
-        throw 'not implemented';
+        throw new Error('not implemented');
+    }
+
+    encryptFieldsWithPermissions(recipient: string, data: Map<string, AccessRight>): Map<string, string> {
+        throw new Error('not implemented');
     }
 
     decryptMessage(senderPk: string, encrypted: string): string {

@@ -3,6 +3,7 @@ const Path = require('path');
 module.exports = {
     entry: './src/Signer.ts',
     devtool: 'source-map',
+    mode: "development",
     node: {
         fs: 'empty',
         child_process: 'empty'

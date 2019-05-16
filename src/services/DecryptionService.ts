@@ -7,8 +7,8 @@ import JsonUtils from '../helpers/JsonUtils';
 
 export default class DecryptionService implements ServiceRpcMethods {
 
-    public getPublicMethods(): Map<string, Pair<Function, any>> {
-        const map: Map<string, Pair<Function, any>> = new Map();
+    public getPublicMethods(): Map<string, Pair<Function, { new(): any }>> {
+        const map: Map<string, Pair<Function, { new(): any }>> = new Map();
         map.set('decryptMessage', new Pair(this.decryptMessage.bind(this), DecryptMessage));
         map.set('decryptFields', new Pair(this.decryptFields.bind(this), DecryptEncryptFields));
 
