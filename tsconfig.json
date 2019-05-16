@@ -14,7 +14,7 @@
     "rootDir": "./",
     "emitDecoratorMetadata": true,
     "removeComments": false,
-    "declaration": true,
+    "declaration": false,
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": true,
