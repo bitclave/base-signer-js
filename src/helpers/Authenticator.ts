@@ -1,5 +1,5 @@
-import { StringUtils } from '../utils/StringUtils';
 import Auth from '../models/Auth';
+import { StringUtils } from '../utils/StringUtils';
 import { KeyPair } from './keypair/KeyPair';
 
 export default class Authenticator {
@@ -16,5 +16,4 @@ export default class Authenticator {
 
         return new Auth(passPhrase, accessToken, 'http://localhost');
     }
-
 }

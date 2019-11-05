@@ -3,8 +3,8 @@ import AccessData from './AccessData';
 
 export default class Client extends AccessData {
 
-    keyPair: KeyPair;
-    local: boolean;
+    public readonly keyPair: KeyPair;
+    public readonly local: boolean;
 
     constructor(keyPair: KeyPair,
                 local: boolean = false,
@@ -17,5 +17,4 @@ export default class Client extends AccessData {
         this.keyPair = keyPair;
         this.local = local;
     }
-
 }

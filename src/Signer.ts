@@ -1,19 +1,18 @@
-//declare function require(arg:string): any;
-import ClientService from './services/ClientService';
-import SignerService from './services/SignerService';
-import { KeyPairHelper } from './helpers/keypair/KeyPairHelper';
-import { ServiceRpcMethods } from './services/ServiceRpcMethods';
-import Pair from './models/Pair';
-import Client from './models/Client';
-import AccessToken from './models/AccessToken';
-import EncryptionService from './services/EncryptionService';
-import DecryptionService from './services/DecryptionService';
-import { KeyPair } from './helpers/keypair/KeyPair';
-import ArgumentUtils from './utils/ArgumentUtils';
-import KeyPairHelperImpl from './helpers/keypair/KeyPairHelperImpl';
-import { StringUtils } from './utils/StringUtils';
-import { Configurator } from './helpers/console/Configurator';
 import Authenticator from './helpers/Authenticator';
+import { Configurator } from './helpers/console/Configurator';
+import { KeyPair } from './helpers/keypair/KeyPair';
+import { KeyPairHelper } from './helpers/keypair/KeyPairHelper';
+import KeyPairHelperImpl from './helpers/keypair/KeyPairHelperImpl';
+import AccessToken from './models/AccessToken';
+import Client from './models/Client';
+import Pair from './models/Pair';
+import ClientService from './services/ClientService';
+import DecryptionService from './services/DecryptionService';
+import EncryptionService from './services/EncryptionService';
+import { ServiceRpcMethods } from './services/ServiceRpcMethods';
+import SignerService from './services/SignerService';
+import ArgumentUtils from './utils/ArgumentUtils';
+import { StringUtils } from './utils/StringUtils';
 
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -31,7 +30,7 @@ export default class Signer {
     constructor() {
         const useLocal: string = ArgumentUtils.getValue('USE_LOCAL', '--useLocal', 'false');
 
-        if (!useLocal || useLocal != 'true') {
+        if (!useLocal || useLocal !== 'true') {
             this.initRemote();
         } else {
             this.initLocal();
@@ -44,12 +43,12 @@ export default class Signer {
         const signerPassPhrase: string = ArgumentUtils.getValue('PASS_PHRASE', '--signerPass', 'signer default pass');
         const authenticatorPublicKey: string = ArgumentUtils.getValue('AUTHENTICATOR_PK', '--authPK');
 
-        this.init(false, parseInt(port), nodeHost, signerPassPhrase, authenticatorPublicKey);
+        this.init(false, parseInt(port, 10), nodeHost, signerPassPhrase, authenticatorPublicKey);
     }
 
     private initLocal() {
         Configurator.prepareConfiguration().then((result: Map<string, string>) => {
-            const port: number = parseInt(result.get('port') || '0');
+            const port: number = parseInt(result.get('port') || '0', 10);
             const nodeHost: string = result.get('node') || '';
             const clientPassPhrase: string = result.get('mnemonic') || '';
 
@@ -57,22 +56,24 @@ export default class Signer {
         });
     }
 
-    private init(useLocal: boolean,
-                 port: number,
-                 nodeHost: string,
-                 signerPassPhrase: string,
-                 authenticatorPublicKey?: string,
-                 clientPassPhrase?: string) {
+    private init(
+        useLocal: boolean,
+        port: number,
+        nodeHost: string,
+        signerPassPhrase: string,
+        authenticatorPublicKey?: string,
+        clientPassPhrase?: string
+    ) {
 
         if (port <= 0) {
-            throw `invalid port number: ${port}`;
+            throw new Error(`invalid port number: ${port}`);
         }
 
         if (!nodeHost ||
-            nodeHost.length == 0 ||
+            nodeHost.length === 0 ||
             nodeHost.indexOf('http') === -1) {
-            throw 'For run Signer need setup node host! For setup use' +
-            ' "environment": "HOST_NODE" or "command arguments": "--host" ';
+            throw new Error('For run Signer need setup node host! For setup use' +
+                ' "environment": "HOST_NODE" or "command arguments": "--host" ');
         }
 
         const keyPairHelper: KeyPairHelper = new KeyPairHelperImpl(nodeHost);
@@ -91,8 +92,8 @@ export default class Signer {
         if (authenticatorPublicKey === undefined ||
             authenticatorPublicKey === null ||
             authenticatorPublicKey.length === 0) {
-            throw 'For run Signer need authenticator public key! For setup use' +
-            ' "environment": "AUTHENTICATOR_PK" or "command arguments": "--authPK"';
+            throw new Error('For run Signer need authenticator public key! For setup use' +
+                ' "environment": "AUTHENTICATOR_PK" or "command arguments": "--authPK"');
         }
 
         this.clientService = new ClientService(keyPairHelper, ownKeyPair, authenticatorPublicKey);
@@ -118,7 +119,7 @@ export default class Signer {
     private initService(methods: object, port: number) {
         app.use(cors());
         app.use(bodyParser.urlencoded({extended: false}));
-        app.use(bodyParser.text({type: '*/*'}));
+        app.use(bodyParser.text({type: '*/*', limit: '50MB'}));
 
         app.post('/', (request, response, next) => {
             const json = JSON.parse(request.body);
@@ -127,14 +128,14 @@ export default class Signer {
             if (methods.hasOwnProperty(method)) {
                 new Promise(resolve => {
                     const origin: string = (request.headers.origin === undefined)
-                        ? 'http://localhost'
-                        : request.headers.origin;
+                                           ? 'http://localhost'
+                                           : request.headers.origin;
 
-                    const result = methods[method](json.params, origin);
+                    const executedResult = methods[method](json.params, origin);
 
                     const data: any = {
-                        'jsonrpc': '2.0',
-                        result: result,
+                        jsonrpc: '2.0',
+                        result: executedResult,
                         id: json.id
                     };
 
@@ -154,25 +155,25 @@ export default class Signer {
     private mergeRpcMethods(...rpcMethods: Array<ServiceRpcMethods>): object {
         const result: any = {};
 
-        for (let service of rpcMethods) {
-            const map: Map<string, Pair<Function, any>> = service.getPublicMethods();
+        for (const service of rpcMethods) {
+            const map: Map<string, Pair<(...args: any) => void, any>> = service.getPublicMethods();
             map.forEach((value, key) => {
                 result[key] = (args: any, origin: string) => {
-                    if (value.second == null || value.second == undefined) {
+                    if (value.second === null || value.second === undefined) {
                         return value.first();
                     }
 
-                    let client: Client | undefined = undefined;
-                    let arg: any = args.length > 0 ? args[0] : {};
+                    let client: Client | undefined;
+                    const arg: any = args.length > 0 ? args[0] : {};
 
-                    const model: any = typeof arg != null && typeof value.second != 'string'
-                        ? Object.assign(new value.second(), arg)
-                        : arg;
+                    const model: any = typeof arg !== null && typeof value.second !== 'string'
+                                       ? Object.assign(new value.second(), arg)
+                                       : arg;
 
                     if (model instanceof AccessToken) {
                         client = this.clientService.getClient(model.accessToken);
                         if (client && (client.origin !== origin && !client.local)) {
-                            throw 'access denied';
+                            throw new Error('access denied');
                         }
                     }
 
@@ -183,7 +184,7 @@ export default class Signer {
 
         return result;
     }
-
 }
 
+// tslint:disable-next-line:no-unused-expression
 new Signer();

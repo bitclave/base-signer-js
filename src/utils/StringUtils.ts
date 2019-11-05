@@ -12,5 +12,4 @@ export class StringUtils {
 
         return text;
     }
-
 }

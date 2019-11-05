@@ -2,8 +2,8 @@ import AccessToken from './AccessToken';
 
 export default class AccessData extends AccessToken {
 
-    origin: string;
-    expireDate: string;
+    public readonly origin: string;
+    public readonly expireDate: string;
 
     constructor(accessToken: string, origin: string, expireDate: string) {
         super(accessToken);
@@ -11,5 +11,4 @@ export default class AccessData extends AccessToken {
         this.origin = origin;
         this.expireDate = expireDate;
     }
-
 }

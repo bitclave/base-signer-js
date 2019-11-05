@@ -1,11 +1,11 @@
 export default class DataRequest {
 
-    readonly id: number = 0;
-    fromPk: string = '';
-    toPk: string = '';
-    rootPk: string = '';
-    requestData: string = '';
-    responseData: string = '';
+    public readonly id: number = 0;
+    public readonly fromPk: string = '';
+    public readonly toPk: string = '';
+    public readonly rootPk: string = '';
+    public readonly requestData: string = '';
+    public readonly responseData: string = '';
 
     constructor(toPk: string = '',
                 requestData: string = '',
@@ -14,5 +14,4 @@ export default class DataRequest {
         this.requestData = requestData;
         this.responseData = responseData;
     }
-
 }

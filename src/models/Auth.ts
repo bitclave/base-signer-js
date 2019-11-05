@@ -2,7 +2,7 @@ import AccessData from './AccessData';
 
 export default class Auth extends AccessData {
 
-    passPhrase: string;
+    public readonly passPhrase: string;
 
     constructor(passPhrase: string = '',
                 accessToken: string = '',
@@ -11,5 +11,4 @@ export default class Auth extends AccessData {
         super(accessToken, origin, expireDate);
         this.passPhrase = passPhrase;
     }
-
 }

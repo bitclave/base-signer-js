@@ -1,9 +1,10 @@
 const Path = require('path');
+const TSLintPlugin = require('tslint-webpack-plugin');
 
 module.exports = {
     entry: './src/Signer.ts',
     devtool: 'source-map',
-    mode: "development",
+    mode: 'development',
     node: {
         fs: 'empty',
         child_process: 'empty'
@@ -13,9 +14,12 @@ module.exports = {
         rules: [
             {
                 test: /\.ts(x?)$/,
-                use: 'ts-loader',
+                use: [
+                    {loader: 'babel-loader'},
+                    {loader: 'ts-loader'},
+                ],
                 exclude: /node_modules/
-            }
+            },
         ]
     },
     resolve: {
@@ -29,5 +33,12 @@ module.exports = {
         libraryTarget: "umd2",
         umdNamedDefine: true
     },
-    plugins: []
+    plugins: [
+        new TSLintPlugin({
+            waitForLinting: true,
+            warningsAsError: true,
+            config: './tslint.json',
+            files: ['./src/**/*.ts', "./test/**/*.ts"]
+        }),
+    ]
 };

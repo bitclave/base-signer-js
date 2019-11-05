@@ -1,6 +1,6 @@
 export default class AccessToken {
 
-    accessToken: string;
+    public readonly accessToken: string;
 
     constructor(accessToken: string = '') {
         this.accessToken = accessToken;
@@ -13,5 +13,4 @@ export default class AccessToken {
     public getClearAccessToken(): string {
         return this.accessToken.substring(0, 32);
     }
-
 }

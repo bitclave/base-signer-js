@@ -2,8 +2,8 @@ import AccessToken from './AccessToken';
 
 export default class DecryptEncryptFields extends AccessToken {
 
-    fields: Map<string, string>;
-    passwords: Map<string, string>;
+    public readonly fields: Map<string, string>;
+    public readonly passwords: Map<string, string>;
 
     constructor(
         accessToken: string = '',
@@ -14,5 +14,4 @@ export default class DecryptEncryptFields extends AccessToken {
         this.fields = fields || new Map();
         this.passwords = passwords || new Map();
     }
-
 }

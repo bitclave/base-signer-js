@@ -1,8 +1,8 @@
 // this class assistant for only read data from Base-node. without any permissions
+import DataRequest from '../../models/DataRequest';
+import { Site } from '../../models/Site';
 import { PermissionsSource } from './PermissionsSource';
 import { SiteDataSource } from './SiteDataSource';
-import { Site } from '../../models/Site';
-import DataRequest from '../../models/DataRequest';
 
 const XMLHttpRequest = require('xmlhttprequest').XMLHttpRequest;
 

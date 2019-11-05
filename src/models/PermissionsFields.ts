@@ -3,13 +3,12 @@ import { AccessRight } from './Permissions';
 
 export default class PermissionsFields extends AccessToken {
 
-    recipient: string;
-    data: Map<string, AccessRight>;
+    public readonly recipient: string;
+    public readonly data: Map<string, AccessRight>;
 
     constructor(accessToken: string = '', recipient: string = '', data: Map<string, AccessRight> = new Map()) {
         super(accessToken);
         this.recipient = recipient;
         this.data = data;
     }
-
 }

@@ -1,13 +1,14 @@
-import Client from '../models/Client';
-import Auth from '../models/Auth';
-import { KeyPairHelper } from '../helpers/keypair/KeyPairHelper';
 import { KeyPair } from '../helpers/keypair/KeyPair';
-import { ServiceRpcMethods } from './ServiceRpcMethods';
-import Pair from '../models/Pair';
-import AccessToken from '../models/AccessToken';
-import ClientData from '../models/ClientData';
+import { KeyPairHelper } from '../helpers/keypair/KeyPairHelper';
 import KeyPairSimple from '../helpers/keypair/KeyPairSimple';
-import bitcore = require('bitcore-lib');
+import AccessToken from '../models/AccessToken';
+import Auth from '../models/Auth';
+import Client from '../models/Client';
+import ClientData from '../models/ClientData';
+import Pair from '../models/Pair';
+import { ServiceRpcMethods } from './ServiceRpcMethods';
+
+const bitcore = require('bitcore-lib');
 
 export default class ClientService implements ServiceRpcMethods {
 
@@ -27,8 +28,8 @@ export default class ClientService implements ServiceRpcMethods {
             .toString(16);
     }
 
-    public getPublicMethods(): Map<string, Pair<Function, any>> {
-        const map: Map<string, Pair<Function, any>> = new Map();
+    public getPublicMethods(): Map<string, Pair<() => void, any>> {
+        const map: Map<string, Pair<() => void, any>> = new Map();
         map.set('registerClient', new Pair(this.registerClient.bind(this), Auth));
         map.set('authenticatorRegisterClient', new Pair(this.authenticatorRegisterClient.bind(this), ''));
         map.set('checkAccessToken', new Pair(this.checkAccessToken.bind(this), AccessToken));
@@ -46,7 +47,7 @@ export default class ClientService implements ServiceRpcMethods {
 
         } catch (e) {
             console.log(e);
-            throw 'Wrong auth data!';
+            throw new Error('Wrong auth data!');
         }
     }
 
@@ -72,11 +73,11 @@ export default class ClientService implements ServiceRpcMethods {
 
         if (!validSig ||
             auth.origin === null ||
-            (auth.origin.indexOf('https://') == -1 && auth.origin.indexOf('http://') == -1) ||
+            (auth.origin.indexOf('https://') === -1 && auth.origin.indexOf('http://') === -1) ||
             auth.passPhrase == null ||
             auth.passPhrase.length < 5
         ) {
-            throw 'Wrong auth data!';
+            throw new Error('Wrong auth data!');
         }
 
         const keyPair: KeyPair = this.keyPairHelper.createClientKeyPair(auth.passPhrase, auth.origin);
@@ -93,5 +94,4 @@ export default class ClientService implements ServiceRpcMethods {
 
         return keyPair.getPublicKey();
     }
-
 }

@@ -1,39 +1,40 @@
-import { KeyPair } from './KeyPair';
 import { AccessRight } from '../../models/Permissions';
-import bitcore = require('bitcore-lib');
-import Message = require('bitcore-message');
-import ECIES = require('bitcore-ecies');
+import { KeyPair } from './KeyPair';
+
+const ECIES = require('bitcore-ecies');
+const Message = require('bitcore-message');
+const bitcore = require('bitcore-lib');
 
 export default class KeyPairSimple implements KeyPair {
 
     protected _privateKey: any;
     protected _publicKey: any;
 
+    public static checkSig(message: string, address: string, signature: string): boolean {
+        return Message(message).verify(address, signature);
+    }
+
     constructor(privateKey: any, publicKey: any) {
         this._privateKey = privateKey;
         this._publicKey = publicKey;
     }
 
-    getPrivateKey(): string {
+    public getPrivateKey(): string {
         return this._privateKey.toString(16);
     }
 
-    getPublicKey(): string {
+    public getPublicKey(): string {
         return this._publicKey.toString(16);
     }
 
-    getAddress(): string {
+    public getAddress(): string {
         return this._privateKey.toAddress().toString(16);
     }
 
-    signMessage(data: string): string {
+    public signMessage(data: string): string {
         const message = new Message(data);
 
         return message.sign(this._privateKey);
-    }
-
-    public static checkSig(message: string, address: string, signature: string): boolean {
-        return Message(message).verify(address, signature);
     }
 
     public checkSig(data: string, sig: string): boolean {
@@ -44,7 +45,7 @@ export default class KeyPairSimple implements KeyPair {
         }
     }
 
-    encryptMessage(recipientPk: string, message: string): string {
+    public encryptMessage(recipientPk: string, message: string): string {
         const ecies: any = new ECIES({noKey: true})
             .privateKey(this._privateKey)
             .publicKey(bitcore.PublicKey.fromString(recipientPk));
@@ -53,19 +54,15 @@ export default class KeyPairSimple implements KeyPair {
             .toString('base64');
     }
 
-    encryptFields(fields: Map<string, string>): Map<string, string> {
+    public encryptFields(fields: Map<string, string>): Map<string, string> {
         throw new Error('not implemented');
     }
 
-    encryptPermissionsFields(recipient: string, data: Map<string, AccessRight>): string {
+    public encryptPermissionsFields(recipient: string, data: Map<string, AccessRight>): string {
         throw new Error('not implemented');
     }
 
-    encryptFieldsWithPermissions(recipient: string, data: Map<string, AccessRight>): Map<string, string> {
-        throw new Error('not implemented');
-    }
-
-    decryptMessage(senderPk: string, encrypted: string): string {
+    public decryptMessage(senderPk: string, encrypted: string): string {
         try {
             const ecies: any = new ECIES({noKey: true})
                 .privateKey(this._privateKey)
@@ -79,8 +76,11 @@ export default class KeyPairSimple implements KeyPair {
         }
     }
 
-    decryptFields(fields: Map<string, string>): Map<string, string> {
-        throw 'not implemented';
+    public decryptFields(fields: Map<string, string>): Map<string, string> {
+        throw new Error('not implemented');
     }
 
+    public encryptFieldsWithPermissions(recipient: string, data: Map<string, AccessRight>): Map<string, string> {
+        throw new Error('not implemented');
+    }
 }

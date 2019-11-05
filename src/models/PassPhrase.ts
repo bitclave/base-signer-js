@@ -1,9 +1,8 @@
 export default class PassPhrase {
 
-    pass: string;
+    public readonly pass: string;
 
     constructor(pass: string = '') {
         this.pass = pass;
     }
-
 }
