@@ -54,6 +54,26 @@ export default class KeyPairClient extends KeyPairSimple {
         return this.encryptMessage(recipient, JSON.stringify(jsonMap));
     }
 
+    encryptFieldsWithPermissions(recipient: string, data: Map<string, AccessRight>): Map<string, string> {
+        const resultMap: Map<string, string> = new Map();
+
+        if (data != null && data.size > 0) {
+            this.syncPermissions();
+
+            for (const [key, value] of data.entries()) {
+                if (!this.hasPermissions(key, false)) {
+                    continue;
+                }
+
+                const pass = this.generatePasswordForField(key.toLowerCase());
+                const encrypted = this.encryptMessage(recipient, JSON.stringify(new AcceptedField(pass, value)));
+                resultMap.set(key, encrypted);
+            }
+        }
+
+        return resultMap;
+    }
+
     decryptFields(fields: Map<string, string>, passwords?: Map<string, string>): Map<string, string> {
         return this.prepareData(fields, false, passwords || new Map());
     }
@@ -110,7 +130,18 @@ export default class KeyPairClient extends KeyPairSimple {
                 for (let request of requests) {
                     const strDecrypt: string = this.decryptMessage(site.publicKey, request.responseData);
                     const jsonDecrypt: any = JSON.parse(strDecrypt);
-                    const resultMap: Map<string, AcceptedField> = JsonUtils.jsonToMap(jsonDecrypt);
+                    let resultMap: Map<string, AcceptedField> = new Map();
+
+                    // for Backward compatibility of deprecated data
+                    if (!request.rootPk || request.rootPk.length <= 0) {
+                        resultMap = JsonUtils.jsonToMap(jsonDecrypt);
+
+                    } else {
+                        resultMap.set(
+                            request.requestData,
+                            Object.assign(new AcceptedField('', AccessRight.R), jsonDecrypt)
+                        );
+                    }
 
                     this.permissions.fields.clear();
 

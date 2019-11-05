@@ -2,6 +2,6 @@ import Pair from '../models/Pair';
 
 export interface ServiceRpcMethods {
 
-    getPublicMethods(): Map<string, Pair<Function, any>>;
+    getPublicMethods(): Map<string, Pair<Function, { new(): any }>>;
 
 }

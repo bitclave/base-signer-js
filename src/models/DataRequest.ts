@@ -3,6 +3,7 @@ export default class DataRequest {
     readonly id: number = 0;
     fromPk: string = '';
     toPk: string = '';
+    rootPk: string = '';
     requestData: string = '';
     responseData: string = '';
 

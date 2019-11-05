@@ -8,11 +8,16 @@ import JsonUtils from '../helpers/JsonUtils';
 
 export default class EncryptionService implements ServiceRpcMethods {
 
-    public getPublicMethods(): Map<string, Pair<Function, any>> {
-        const map: Map<string, Pair<Function, any>> = new Map();
+    public getPublicMethods(): Map<string, Pair<Function, { new(): any }>> {
+        const map: Map<string, Pair<Function, { new(): any }>> = new Map();
+
         map.set('encryptMessage', new Pair(this.encryptMessage.bind(this), EncryptMessage));
         map.set('encryptFields', new Pair(this.encryptFields.bind(this), DecryptEncryptFields));
         map.set('encryptPermissionsFields', new Pair(this.encryptPermissionsFields.bind(this), PermissionsFields));
+        map.set(
+            'encryptFieldsWithPermissions',
+            new Pair(this.encryptFieldsWithPermissions.bind(this), PermissionsFields)
+        );
 
         return map;
     }
@@ -42,4 +47,17 @@ export default class EncryptionService implements ServiceRpcMethods {
         throw 'client not found!';
     }
 
+    public encryptFieldsWithPermissions(
+        permissionsFields: PermissionsFields,
+        client: Client | undefined
+    ): Map<string, string> {
+        if (client != undefined) {
+            const resultMap: Map<string, string> = client.keyPair.encryptFieldsWithPermissions(
+                permissionsFields.recipient, JsonUtils.jsonToMap(permissionsFields.data)
+            );
+
+            return JsonUtils.mapToJson(resultMap);
+        }
+        throw 'client not found!';
+    }
 }
