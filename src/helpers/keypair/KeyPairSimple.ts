@@ -11,7 +11,13 @@ export default class KeyPairSimple implements KeyPair {
     protected _publicKey: any;
 
     public static checkSig(message: string, address: string, signature: string): boolean {
-        return Message(message).verify(address, signature);
+        try {
+            return Message(message).verify(address, signature);
+
+        } catch (e) {
+            console.warn(e);
+            return false;
+        }
     }
 
     constructor(privateKey: any, publicKey: any) {

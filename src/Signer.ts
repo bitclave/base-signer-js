@@ -1,9 +1,12 @@
+import { AccessTokenValidatorStrategy } from './helpers/access/tokens/AccessTokenValidatorStrategy';
+import { BasicAccessTokenValidator } from './helpers/access/tokens/BasicAccessTokenValidator';
 import Authenticator from './helpers/Authenticator';
 import { Configurator } from './helpers/console/Configurator';
 import { KeyPair } from './helpers/keypair/KeyPair';
 import { KeyPairHelper } from './helpers/keypair/KeyPairHelper';
 import KeyPairHelperImpl from './helpers/keypair/KeyPairHelperImpl';
 import AccessToken from './models/AccessToken';
+import { TokenType } from './models/AuthData';
 import Client from './models/Client';
 import Pair from './models/Pair';
 import ClientService from './services/ClientService';
@@ -89,14 +92,15 @@ export default class Signer {
 
         const ownKeyPair: KeyPair = keyPairHelper.createSimpleKeyPair(signerPassPhrase);
 
-        if (authenticatorPublicKey === undefined ||
-            authenticatorPublicKey === null ||
-            authenticatorPublicKey.length === 0) {
-            throw new Error('For run Signer need authenticator public key! For setup use' +
-                ' "environment": "AUTHENTICATOR_PK" or "command arguments": "--authPK"');
-        }
+        authenticatorPublicKey = StringUtils.isEmpty(authenticatorPublicKey) ? '' : authenticatorPublicKey!!;
 
-        this.clientService = new ClientService(keyPairHelper, ownKeyPair, authenticatorPublicKey);
+        const tokenValidatorStrategy = new AccessTokenValidatorStrategy();
+        tokenValidatorStrategy.setStrategy(
+            TokenType.BASIC,
+            new BasicAccessTokenValidator(authenticatorPublicKey, ownKeyPair)
+        );
+
+        this.clientService = new ClientService(keyPairHelper, ownKeyPair, tokenValidatorStrategy);
         this.signerService = new SignerService();
         this.encryptionService = new EncryptionService();
         this.decryptionService = new DecryptionService();
@@ -111,8 +115,8 @@ export default class Signer {
         this.initService(methods, port);
 
         if (clientPassPhrase && authenticatorKeyPair) {
-            const authenticator: Authenticator = new Authenticator(authenticatorKeyPair);
-            this.clientService.registerClient(authenticator.prepareAuth(clientPassPhrase), true);
+            const authenticator: Authenticator = new Authenticator(authenticatorKeyPair, ownKeyPair.getPublicKey());
+            this.clientService.authenticatorRegisterClient(authenticator.prepareLocalAuth(clientPassPhrase));
         }
     }
 
@@ -147,9 +151,7 @@ export default class Signer {
             }
         });
 
-        app.listen(port, () => {
-            console.log('Signer running on port', port);
-        });
+        app.listen(port, () => console.log('Signer running on port', port));
     }
 
     private mergeRpcMethods(...rpcMethods: Array<ServiceRpcMethods>): object {
@@ -172,7 +174,8 @@ export default class Signer {
 
                     if (model instanceof AccessToken) {
                         client = this.clientService.getClient(model.accessToken);
-                        if (client && (client.origin !== origin && !client.local)) {
+
+                        if (client && (client.origin !== origin && client.type !== TokenType.BASIC)) {
                             throw new Error('access denied');
                         }
                     }

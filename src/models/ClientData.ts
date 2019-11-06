@@ -18,7 +18,7 @@ export default class ClientData extends AccessData {
         publicKey: string,
         accessToken: string,
         origin: string,
-        expireDate: string
+        expireDate: Date
     ) {
 
         super(accessToken, origin, expireDate);

@@ -1,20 +1,16 @@
 import { KeyPair } from '../helpers/keypair/KeyPair';
 import AccessData from './AccessData';
+import { TokenType } from './AuthData';
 
 export default class Client extends AccessData {
 
     public readonly keyPair: KeyPair;
-    public readonly local: boolean;
+    public readonly type: TokenType;
 
-    constructor(keyPair: KeyPair,
-                local: boolean = false,
-                accessToken: string = '',
-                origin: string = '',
-                expireDate: string = '') {
-
+    constructor(accessToken: string, origin: string, expireDate: Date, keyPair: KeyPair, type: TokenType) {
         super(accessToken, origin, expireDate);
 
         this.keyPair = keyPair;
-        this.local = local;
+        this.type = type;
     }
 }
