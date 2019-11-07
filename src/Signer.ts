@@ -1,5 +1,6 @@
 import { AccessTokenValidatorStrategy } from './helpers/access/tokens/AccessTokenValidatorStrategy';
 import { BasicAccessTokenValidator } from './helpers/access/tokens/BasicAccessTokenValidator';
+import { JwtAccessTokenValidator } from './helpers/access/tokens/JwtAccessTokenValidator';
 import Authenticator from './helpers/Authenticator';
 import { Configurator } from './helpers/console/Configurator';
 import { KeyPair } from './helpers/keypair/KeyPair';
@@ -22,7 +23,7 @@ const cors = require('cors');
 const express = require('express');
 const app = express();
 
-export default class Signer {
+class Signer {
 
     public encryptionService: EncryptionService;
     public decryptionService: DecryptionService;
@@ -45,8 +46,9 @@ export default class Signer {
         const nodeHost: string = ArgumentUtils.getValue('HOST_NODE', '--host', '');
         const signerPassPhrase: string = ArgumentUtils.getValue('PASS_PHRASE', '--signerPass', 'signer default pass');
         const authenticatorPublicKey: string = ArgumentUtils.getValue('AUTHENTICATOR_PK', '--authPK');
+        const jwtRsaCert: string = ArgumentUtils.getValue('JWT_RSA_CERT', '--jwtRsaCert');
 
-        this.init(false, parseInt(port, 10), nodeHost, signerPassPhrase, authenticatorPublicKey);
+        this.init(false, parseInt(port, 10), nodeHost, signerPassPhrase, authenticatorPublicKey, undefined, jwtRsaCert);
     }
 
     private initLocal() {
@@ -65,7 +67,8 @@ export default class Signer {
         nodeHost: string,
         signerPassPhrase: string,
         authenticatorPublicKey?: string,
-        clientPassPhrase?: string
+        clientPassPhrase?: string,
+        jwtRsaCert?: string,
     ) {
 
         if (port <= 0) {
@@ -99,6 +102,8 @@ export default class Signer {
             TokenType.BASIC,
             new BasicAccessTokenValidator(authenticatorPublicKey, ownKeyPair)
         );
+
+        tokenValidatorStrategy.setStrategy(TokenType.KEYCLOACK_JWT, new JwtAccessTokenValidator(jwtRsaCert || ''));
 
         this.clientService = new ClientService(keyPairHelper, ownKeyPair, tokenValidatorStrategy);
         this.signerService = new SignerService();
