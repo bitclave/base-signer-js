@@ -8,6 +8,8 @@ import CryptoUtils from '../CryptoUtils';
 import JsonUtils from '../JsonUtils';
 import KeyPairSimple from './KeyPairSimple';
 
+const bitcore = require('bitcore-lib');
+
 export default class KeyPairClient extends KeyPairSimple {
 
     private permissions: Permissions;
@@ -56,7 +58,7 @@ export default class KeyPairClient extends KeyPairSimple {
         return this.encryptMessage(recipient, JSON.stringify(jsonMap));
     }
 
-   public encryptFieldsWithPermissions(recipient: string, data: Map<string, AccessRight>): Map<string, string> {
+    public encryptFieldsWithPermissions(recipient: string, data: Map<string, AccessRight>): Map<string, string> {
         const resultMap: Map<string, string> = new Map();
 
         if (data != null && data.size > 0) {
@@ -156,9 +158,14 @@ export default class KeyPairClient extends KeyPairSimple {
     }
 
     private generatePasswordForField(fieldName: string): string {
-        return CryptoUtils.PBKDF2(
-            CryptoUtils.keccak256(this._privateKey.toString(16)) + fieldName.toLowerCase(),
-            384
-        );
+        // const result: string = CryptoUtils.PBKDF2(
+        //     CryptoUtils.keccak256(this.privateKey.toString(16)) + fieldName.toLowerCase(),
+        //     384
+        // );
+
+        return bitcore.crypto.Hash.sha256hmac(
+            bitcore.deps.Buffer(this._privateKey.toString(16)),
+            bitcore.deps.Buffer(fieldName.toLowerCase())
+        ).toString('hex');
     }
 }
