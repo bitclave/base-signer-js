@@ -9,7 +9,7 @@ const bitcore = require('bitcore-lib');
 
 export default class KeyPairHelperImpl implements KeyPairHelper {
 
-    private assistant: AssistantNodeRepository;
+    private readonly assistant: AssistantNodeRepository;
 
     constructor(nodeHost: string) {
         this.assistant = new AssistantNodeRepository(nodeHost, RepositoryStrategyType.Postgres);
