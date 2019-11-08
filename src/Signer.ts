@@ -180,9 +180,14 @@ class Signer {
                     if (model instanceof AccessToken) {
                         client = this.clientService.getClient(model.accessToken);
 
-                        if (client && (client.origin !== origin && client.type !== TokenType.BASIC)) {
+                        if (!client) {
                             throw new Error('access denied');
                         }
+
+                        // fixme enable check few origins
+                        // if (client && ( client.origin !== origin && client.type !== TokenType.BASIC)) {
+                        //     throw new Error('access denied');
+                        // }
                     }
 
                     return value.first(model, client, origin);
