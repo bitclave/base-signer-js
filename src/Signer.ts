@@ -167,7 +167,7 @@ class Signer {
             map.forEach((value, key) => {
                 result[key] = (args: any, origin: string) => {
                     if (value.second === null || value.second === undefined) {
-                        return value.first();
+                        return value.first(origin);
                     }
 
                     let client: Client | undefined;
@@ -178,16 +178,13 @@ class Signer {
                                        : arg;
 
                     if (model instanceof AccessToken) {
-                        client = this.clientService.getClient(model.accessToken);
+                        client = this.clientService.checkAccessToken(model, origin);
 
                         if (!client) {
                             throw new Error('access denied');
                         }
 
-                        // fixme enable check few origins
-                        // if (client && ( client.origin !== origin && client.type !== TokenType.BASIC)) {
-                        //     throw new Error('access denied');
-                        // }
+                        client.keyPair.changeCurrentOrigin(origin);
                     }
 
                     return value.first(model, client, origin);

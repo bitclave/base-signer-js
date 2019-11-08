@@ -22,7 +22,7 @@ export default class ClientService implements ServiceRpcMethods {
     public getPublicMethods(): Map<string, Pair<() => void, any>> {
         const map: Map<string, Pair<() => void, any>> = new Map();
         map.set('authenticatorRegisterClient', new Pair(this.authenticatorRegisterClient.bind(this), AuthData));
-        map.set('checkAccessToken', new Pair(this.checkAccessToken.bind(this), AccessToken));
+        map.set('getClientData', new Pair(this.getClientData.bind(this), AccessToken));
         map.set('getPublicKey', new Pair(this.getPublicKey.bind(this), null));
 
         return map;
@@ -31,7 +31,9 @@ export default class ClientService implements ServiceRpcMethods {
     public authenticatorRegisterClient(authData: AuthData): string {
         if (this.tokenValidator.validate(authData)) {
             const auth = this.tokenValidator.getAuth(authData);
-            const keyPair = this.keyPairHelper.createClientKeyPair(auth.passPhrase, auth.origin);
+            const keyPair = this.keyPairHelper.createClientKeyPair(auth.passPhrase, '');
+
+            keyPair.setAcceptedOrigins(auth.origin);
 
             const client: Client = new Client(
                 auth.accessToken,
@@ -54,11 +56,21 @@ export default class ClientService implements ServiceRpcMethods {
         return this.ownKeyPair.getPublicKey();
     }
 
-    public getClient(accessToken: string): Client | undefined {
-        return this.clients.get(accessToken);
+    public getClientData(accessToken: AccessToken, client: Client | undefined): ClientData | undefined {
+        return client ? ClientData.valueOf(client) : undefined;
     }
 
-    public checkAccessToken(accessToken: AccessToken, client: Client | undefined): ClientData | undefined {
-        return client ? ClientData.valueOf(client) : undefined;
+    public checkAccessToken(accessToken: AccessToken, origin: string): Client | undefined {
+        const client = this.clients.get(accessToken.accessToken);
+
+        const clearOrigin = origin.toLowerCase()
+            .replace('http://', '')
+            .replace('https://', '')
+            .replace('www.', '');
+
+        const isValidOrigin = client ? client.checkOrigin(clearOrigin) : false;
+        const tokenExpired = client ? client.tokenExpired() : true;
+
+        return isValidOrigin && !tokenExpired ? client : undefined;
     }
 }

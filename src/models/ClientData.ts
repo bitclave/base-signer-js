@@ -17,7 +17,7 @@ export default class ClientData extends AccessData {
     constructor(
         publicKey: string,
         accessToken: string,
-        origin: string,
+        origin: Set<string>,
         expireDate: Date
     ) {
 

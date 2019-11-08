@@ -16,7 +16,7 @@ export default class Authenticator {
 
         const expireDate = new Date(new Date().getTime() + Authenticator.EXPIRE_TOKEN_HOURS_MS);
 
-        const auth: Auth = new Auth(accessToken, passPhrase, 'http://localhost', expireDate);
+        const auth: Auth = new Auth(accessToken, passPhrase, new Set<string>(['http://localhost']), expireDate);
         const encryptedAuth: string = this.keyPair.encryptMessage(this.signerPublicKey, JSON.stringify(auth));
 
         return new AuthData(TokenType.BASIC, JSON.stringify(encryptedAuth));

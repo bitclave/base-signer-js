@@ -28,7 +28,7 @@ export class JwtAccessTokenValidator extends AccessTokenValidator {
             const auth = this.getAuth(data);
 
             return !StringUtils.isEmpty(auth.passPhrase) &&
-                !StringUtils.isEmpty(auth.origin) &&
+                auth.origin.size > 0 &&
                 auth.passPhrase.length >= 5 &&
                 auth.expireDate.getTime() > new Date().getTime();
 
@@ -46,8 +46,14 @@ export class JwtAccessTokenValidator extends AccessTokenValidator {
             {ignoreExpiration: false}
         );
 
-        // fixme origin data!
-        return new Auth(decrypted.sub, data.data, 'http://localhost', new Date((Number(decrypted.exp) || 0) * 1000));
+        const origins = new Set<string>(decrypted['allowed-origins']);
+
+        return new Auth(
+            decrypted.sub,
+            data.data,
+            origins,
+            new Date((Number(decrypted.exp) || 0) * 1000)
+        );
     }
 
     private convertCertificate(rawCert: string): string {

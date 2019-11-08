@@ -35,7 +35,7 @@ export class BasicAccessTokenValidator extends AccessTokenValidator {
             const auth = this.getAuth(data);
 
             const simpleValidation = !StringUtils.isEmpty(auth.passPhrase) &&
-                !StringUtils.isEmpty(auth.origin) &&
+                auth.origin.size > 0 &&
                 auth.passPhrase.length >= 5 &&
                 auth.expireDate.getTime() > new Date().getTime();
 
@@ -56,9 +56,8 @@ export class BasicAccessTokenValidator extends AccessTokenValidator {
 
     public getAuth(data: AuthData): Auth {
         const strJsonAuth = this.ownKeyPair.decryptMessage(this.authenticatorPublicKey, data.data);
-        const result: Auth = Object.assign(new Auth(), JSON.parse(strJsonAuth));
 
-        return new Auth(result.passPhrase, result.accessToken, result.origin, new Date(result.expireDate));
+        return Auth.valueOf(JSON.parse(strJsonAuth));
     }
 
     private getAccessTokenSig(auth: Auth): string {

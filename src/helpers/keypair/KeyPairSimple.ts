@@ -89,4 +89,12 @@ export default class KeyPairSimple implements KeyPair {
     public encryptFieldsWithPermissions(recipient: string, data: Map<string, AccessRight>): Map<string, string> {
         throw new Error('not implemented');
     }
+
+    public setAcceptedOrigins(origins: Set<string>) {
+        throw new Error('not implemented');
+    }
+
+    public changeCurrentOrigin(origin: string) {
+        throw new Error('not implemented');
+    }
 }

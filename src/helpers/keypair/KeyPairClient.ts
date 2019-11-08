@@ -15,7 +15,8 @@ export default class KeyPairClient extends KeyPairSimple {
     private permissions: Permissions;
     private permissionsSource: PermissionsSource;
     private siteDataSource: SiteDataSource;
-    private origin: string;
+    private acceptedOrigins: Set<string>;
+    private currentOrigin: string;
     private isConfidential: boolean = false;
 
     constructor(
@@ -30,7 +31,7 @@ export default class KeyPairClient extends KeyPairSimple {
         this.permissions = new Permissions();
         this.permissionsSource = permissionsSource;
         this.siteDataSource = siteDataSource;
-        this.origin = origin;
+        this.currentOrigin = origin;
     }
 
     public encryptFields(fields: Map<string, string>): Map<string, string> {
@@ -82,6 +83,31 @@ export default class KeyPairClient extends KeyPairSimple {
         return this.prepareData(fields, false, passwords || new Map());
     }
 
+    public setAcceptedOrigins(origins: Set<string>) {
+        this.acceptedOrigins = new Set<string>(origins);
+
+        this.permissions.fields.clear();
+        this.isConfidential = this.acceptedOrigins.has('*');
+    }
+
+    public changeCurrentOrigin(origin: string) {
+        const clearOrigin = origin.toLowerCase()
+            .replace('http://', '')
+            .replace('https://', '')
+            .replace('www.', '');
+
+        if (!this.acceptedOrigins.has('*') && !this.acceptedOrigins.has(clearOrigin)) {
+            throw new Error('Unapproved origin');
+        }
+
+        if (this.currentOrigin !== clearOrigin && !this.acceptedOrigins.has('*')) {
+            this.permissions.fields.clear();
+            this.isConfidential = false;
+        }
+
+        this.currentOrigin = clearOrigin;
+    }
+
     private prepareData(
         data: Map<string, string>,
         encrypt: boolean,
@@ -123,7 +149,7 @@ export default class KeyPairClient extends KeyPairSimple {
 
     private syncPermissions() {
         if (!this.isConfidential && this.permissions.fields.size === 0) {
-            const site: Site = this.siteDataSource.getSiteData(this.origin);
+            const site: Site = this.siteDataSource.getSiteData(this.currentOrigin);
             this.isConfidential = site.confidential;
 
             if (!site.confidential) {
