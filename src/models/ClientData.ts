@@ -8,7 +8,6 @@ export default class ClientData extends AccessData {
     public static valueOf(client: Client): ClientData {
         return new ClientData(
             client.keyPair.getPublicKey(),
-            client.accessToken,
             client.origin,
             client.expireDate
         );
@@ -16,12 +15,11 @@ export default class ClientData extends AccessData {
 
     constructor(
         publicKey: string,
-        accessToken: string,
         origin: Set<string>,
         expireDate: Date
     ) {
 
-        super(accessToken, origin, expireDate);
+        super(origin, expireDate);
 
         this.publicKey = publicKey;
     }

@@ -1,14 +1,14 @@
 import { KeyPair } from '../helpers/keypair/KeyPair';
 import AccessData from './AccessData';
-import { TokenType } from './AuthData';
+import { TokenType } from './RpcToken';
 
 export default class Client extends AccessData {
 
     public readonly keyPair: KeyPair;
     public readonly type: TokenType;
 
-    constructor(accessToken: string, origin: Set<string>, expireDate: Date, keyPair: KeyPair, type: TokenType) {
-        super(accessToken, origin, expireDate);
+    constructor(origin: Set<string>, expireDate: Date, keyPair: KeyPair, type: TokenType) {
+        super(origin, expireDate);
 
         this.keyPair = keyPair;
         this.type = type;

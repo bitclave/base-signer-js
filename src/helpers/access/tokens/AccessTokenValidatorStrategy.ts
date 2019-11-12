@@ -1,5 +1,5 @@
 import Auth from '../../../models/Auth';
-import { AuthData, TokenType } from '../../../models/AuthData';
+import RpcToken, { TokenType } from '../../../models/RpcToken';
 import { AccessTokenValidator } from './AccessTokenValidator';
 
 export class AccessTokenValidatorStrategy extends AccessTokenValidator {
@@ -10,12 +10,12 @@ export class AccessTokenValidatorStrategy extends AccessTokenValidator {
         this.validators.set(type, validator);
     }
 
-    public validate(data: AuthData): boolean {
-        return this.getValidator(data.type).validate(data);
+    public validate(token: RpcToken): boolean {
+        return this.getValidator(token.tokenType).validate(token);
     }
 
-    public getAuth(data: AuthData): Auth {
-        return this.getValidator(data.type).getAuth(data);
+    public getAuth(token: RpcToken): Auth {
+        return this.getValidator(token.tokenType).getAuth(token);
     }
 
     private getValidator(type: TokenType): AccessTokenValidator {

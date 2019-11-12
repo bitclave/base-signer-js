@@ -1,6 +1,6 @@
-import AccessToken from './AccessToken';
+import RpcToken from './RpcToken';
 
-export default class SignMessage extends AccessToken {
+export default class SignMessage extends RpcToken {
 
     public readonly message: string;
 

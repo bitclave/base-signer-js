@@ -1,9 +1,9 @@
 import Auth from '../../../models/Auth';
-import { AuthData } from '../../../models/AuthData';
+import RpcToken from '../../../models/RpcToken';
 
 export abstract class AccessTokenValidator {
 
-    public abstract validate(data: AuthData): boolean;
+    public abstract validate(token: RpcToken): boolean;
 
-    public abstract getAuth(data: AuthData): Auth;
+    public abstract getAuth(token: RpcToken): Auth;
 }

@@ -1,12 +1,9 @@
-import AccessToken from './AccessToken';
-
-export default class AccessData extends AccessToken {
+export default class AccessData {
 
     public readonly origin: Set<string>;
     public readonly expireDate: Date;
 
-    constructor(accessToken: string, origin: Set<string>, expireDate: Date) {
-        super(accessToken);
+    constructor(origin: Set<string>, expireDate: Date) {
 
         this.origin = origin;
         this.expireDate = expireDate;

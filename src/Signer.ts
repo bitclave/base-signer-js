@@ -6,10 +6,9 @@ import { Configurator } from './helpers/console/Configurator';
 import { KeyPair } from './helpers/keypair/KeyPair';
 import { KeyPairHelper } from './helpers/keypair/KeyPairHelper';
 import KeyPairHelperImpl from './helpers/keypair/KeyPairHelperImpl';
-import AccessToken from './models/AccessToken';
-import { TokenType } from './models/AuthData';
 import Client from './models/Client';
 import Pair from './models/Pair';
+import RpcToken, { TokenType } from './models/RpcToken';
 import ClientService from './services/ClientService';
 import DecryptionService from './services/DecryptionService';
 import EncryptionService from './services/EncryptionService';
@@ -177,7 +176,7 @@ class Signer {
                                        ? Object.assign(new value.second(), arg)
                                        : arg;
 
-                    if (model instanceof AccessToken) {
+                    if (model instanceof RpcToken) {
                         client = this.clientService.checkAccessToken(model, origin);
 
                         if (!client) {

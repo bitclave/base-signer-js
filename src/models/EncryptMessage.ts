@@ -1,6 +1,6 @@
-import AccessToken from './AccessToken';
+import RpcToken from './RpcToken';
 
-export default class EncryptMessage extends AccessToken {
+export default class EncryptMessage extends RpcToken {
 
     public readonly recipientPk: string;
     public readonly message: string;

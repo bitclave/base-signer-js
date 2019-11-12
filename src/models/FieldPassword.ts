@@ -1,6 +1,6 @@
-import AccessToken from './AccessToken';
+import RpcToken from './RpcToken';
 
-export default class FieldPassword extends AccessToken {
+export default class FieldPassword extends RpcToken {
 
     public readonly fieldName: string;
 

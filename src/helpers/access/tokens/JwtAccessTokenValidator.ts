@@ -1,5 +1,5 @@
 import Auth from '../../../models/Auth';
-import { AuthData } from '../../../models/AuthData';
+import RpcToken from '../../../models/RpcToken';
 import { StringUtils } from '../../../utils/StringUtils';
 import { AccessTokenValidator } from './AccessTokenValidator';
 
@@ -23,9 +23,9 @@ export class JwtAccessTokenValidator extends AccessTokenValidator {
         }
     }
 
-    public validate(data: AuthData): boolean {
+    public validate(token: RpcToken): boolean {
         try {
-            const auth = this.getAuth(data);
+            const auth = this.getAuth(token);
 
             return !StringUtils.isEmpty(auth.passPhrase) &&
                 auth.origin.size > 0 &&
@@ -39,9 +39,9 @@ export class JwtAccessTokenValidator extends AccessTokenValidator {
         return false;
     }
 
-    public getAuth(data: AuthData): Auth {
+    public getAuth(token: RpcToken): Auth {
         const decrypted = jwt.verify(
-            data.data,
+            token.accessToken,
             this.validCert,
             {ignoreExpiration: false}
         );
@@ -50,7 +50,6 @@ export class JwtAccessTokenValidator extends AccessTokenValidator {
 
         return new Auth(
             decrypted.sub,
-            data.data,
             origins,
             new Date((Number(decrypted.exp) || 0) * 1000)
         );

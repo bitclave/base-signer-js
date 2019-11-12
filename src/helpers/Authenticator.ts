@@ -1,6 +1,5 @@
 import Auth from '../models/Auth';
-import { AuthData, TokenType } from '../models/AuthData';
-import { StringUtils } from '../utils/StringUtils';
+import RpcToken, { TokenType } from '../models/RpcToken';
 import { KeyPair } from './keypair/KeyPair';
 
 export default class Authenticator {
@@ -10,15 +9,11 @@ export default class Authenticator {
     constructor(private readonly keyPair: KeyPair, private readonly signerPublicKey: string) {
     }
 
-    public prepareLocalAuth(passPhrase: string): AuthData {
-        let accessToken: string = StringUtils.generateString();
-        accessToken += this.keyPair.signMessage(accessToken);
-
+    public prepareLocalAuth(passPhrase: string): RpcToken {
         const expireDate = new Date(new Date().getTime() + Authenticator.EXPIRE_TOKEN_HOURS_MS);
 
-        const auth: Auth = new Auth(accessToken, passPhrase, new Set<string>(['http://localhost']), expireDate);
-        const encryptedAuth: string = this.keyPair.encryptMessage(this.signerPublicKey, JSON.stringify(auth));
+        const auth: Auth = new Auth(passPhrase, new Set<string>(['http://localhost']), expireDate);
 
-        return new AuthData(TokenType.BASIC, JSON.stringify(encryptedAuth));
+        return new RpcToken(this.keyPair.encryptMessage(this.signerPublicKey, JSON.stringify(auth)), TokenType.BASIC);
     }
 }

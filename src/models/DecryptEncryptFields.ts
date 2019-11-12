@@ -1,6 +1,6 @@
-import AccessToken from './AccessToken';
+import RpcToken from './RpcToken';
 
-export default class DecryptEncryptFields extends AccessToken {
+export default class DecryptEncryptFields extends RpcToken {
 
     public readonly fields: Map<string, string>;
     public readonly passwords: Map<string, string>;

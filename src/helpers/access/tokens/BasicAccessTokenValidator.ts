@@ -1,26 +1,15 @@
 import Auth from '../../../models/Auth';
-import { AuthData } from '../../../models/AuthData';
+import RpcToken from '../../../models/RpcToken';
 import { StringUtils } from '../../../utils/StringUtils';
 import { KeyPair } from '../../keypair/KeyPair';
-import KeyPairSimple from '../../keypair/KeyPairSimple';
 import { AccessTokenValidator } from './AccessTokenValidator';
 
-const bitcore = require('bitcore-lib');
-
 export class BasicAccessTokenValidator extends AccessTokenValidator {
-
-    private readonly authenticatorAddress: string;
 
     constructor(private readonly authenticatorPublicKey: string, private readonly ownKeyPair: KeyPair) {
         super();
 
-        try {
-            this.authenticatorAddress = bitcore.PublicKey
-                .fromString(authenticatorPublicKey)
-                .toAddress()
-                .toString(16);
-
-        } catch (e) {
+        if (StringUtils.isEmpty(authenticatorPublicKey)) {
             console.warn(
                 'Cannot create authenticator address for BASIC authorization!\n' +
                 'Maybe you forgot setup authenticator public key or something went wrong!\n' +
@@ -29,23 +18,15 @@ export class BasicAccessTokenValidator extends AccessTokenValidator {
         }
     }
 
-    public validate(data: AuthData): boolean {
+    public validate(token: RpcToken): boolean {
 
         try {
-            const auth = this.getAuth(data);
+            const auth = this.getAuth(token);
 
-            const simpleValidation = !StringUtils.isEmpty(auth.passPhrase) &&
+            return !StringUtils.isEmpty(auth.passPhrase) &&
                 auth.origin.size > 0 &&
                 auth.passPhrase.length >= 5 &&
                 auth.expireDate.getTime() > new Date().getTime();
-
-            const sigValidation = KeyPairSimple.checkSig(
-                this.getClearAccessToken(auth),
-                this.authenticatorAddress,
-                this.getAccessTokenSig(auth)
-            );
-
-            return simpleValidation && sigValidation;
 
         } catch (e) {
             console.warn(e);
@@ -54,17 +35,9 @@ export class BasicAccessTokenValidator extends AccessTokenValidator {
         return false;
     }
 
-    public getAuth(data: AuthData): Auth {
-        const strJsonAuth = this.ownKeyPair.decryptMessage(this.authenticatorPublicKey, data.data);
+    public getAuth(token: RpcToken): Auth {
+        const strJsonAuth = this.ownKeyPair.decryptMessage(this.authenticatorPublicKey, token.accessToken);
 
         return Auth.valueOf(JSON.parse(strJsonAuth));
-    }
-
-    private getAccessTokenSig(auth: Auth): string {
-        return auth.accessToken.substring(32);
-    }
-
-    private getClearAccessToken(auth: Auth): string {
-        return auth.accessToken.substring(0, 32);
     }
 }

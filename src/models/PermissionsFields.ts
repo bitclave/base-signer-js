@@ -1,7 +1,7 @@
-import AccessToken from './AccessToken';
 import { AccessRight } from './Permissions';
+import RpcToken from './RpcToken';
 
-export default class PermissionsFields extends AccessToken {
+export default class PermissionsFields extends RpcToken {
 
     public readonly recipient: string;
     public readonly data: Map<string, AccessRight>;
