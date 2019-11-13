@@ -1,3 +1,5 @@
+import * as Express from 'express';
+import { NextFunction, Request, Response } from 'express-serve-static-core';
 import { AccessTokenValidatorStrategy } from './helpers/access/tokens/AccessTokenValidatorStrategy';
 import { BasicAccessTokenValidator } from './helpers/access/tokens/BasicAccessTokenValidator';
 import { JwtAccessTokenValidator } from './helpers/access/tokens/JwtAccessTokenValidator';
@@ -19,8 +21,7 @@ import { StringUtils } from './utils/StringUtils';
 
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const express = require('express');
-const app = express();
+const app = Express();
 
 class Signer {
 
@@ -124,47 +125,71 @@ class Signer {
         }
     }
 
-    private initService(methods: object, port: number) {
+    private initService(methods: Map<string, (args: any, origin: string) => any>, port: number) {
         app.use(cors());
         app.use(bodyParser.urlencoded({extended: false}));
         app.use(bodyParser.text({type: '*/*', limit: '50MB'}));
 
-        app.post('/', (request, response, next) => {
-            const json = JSON.parse(request.body);
-            const method = json.method;
-
-            if (methods.hasOwnProperty(method)) {
-                new Promise(resolve => {
-                    const origin: string = (request.headers.origin === undefined)
-                                           ? 'http://localhost'
-                                           : request.headers.origin;
-
-                    const executedResult = methods[method](json.params, origin);
-
-                    const data: any = {
-                        jsonrpc: '2.0',
-                        result: executedResult,
-                        id: json.id
-                    };
-
-                    resolve(data);
-                }).then(result => response.send(result))
-                    .catch(reason => next(reason));
-            } else {
-                next();
-            }
-        });
+        app.post(
+            '/',
+            (req: Request<any>, res: Response, next: NextFunction) => this.executeMethod(methods, req, res, next)
+        );
 
         app.listen(port, () => console.log('Signer running on port', port));
     }
 
-    private mergeRpcMethods(...rpcMethods: Array<ServiceRpcMethods>): object {
-        const result: any = {};
+    private async executeMethod(
+        methods: Map<string, (args: any, origin: string) => any>,
+        req: Request<any>,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> {
+
+        const data = {
+            jsonrpc: '2.0',
+            result: undefined,
+            id: -1,
+            error: undefined
+        };
+
+        try {
+            const json = JSON.parse(req.body);
+            const method = json.method;
+
+            data.id = json.id || -1;
+
+            if (!methods.has(method)) {
+                throw new Error(`Unknown method: ${method}`);
+            }
+
+            const origin: string = (req.headers.origin === undefined)
+                                   ? 'http://localhost'
+                                   : req.headers.origin.toString();
+
+            data.result = methods.get(method)!!(json.params, origin);
+            delete data.error;
+
+            res.send(data);
+
+        } catch (e) {
+            data.error = e.message;
+            data.result = (e.stack || '')
+                .toString()
+                .replace('    ', '')
+                .split('\n');
+
+            res.status(500).send(data);
+        }
+    }
+
+    private mergeRpcMethods(...rpcMethods: Array<ServiceRpcMethods>): Map<string, (args: any, origin: string) => void> {
+        const result = new Map<string, (args: any, origin: string) => any>();
 
         for (const service of rpcMethods) {
-            const map: Map<string, Pair<(...args: any) => void, any>> = service.getPublicMethods();
+            const map: Map<string, Pair<(...args: any) => any, any>> = service.getPublicMethods();
             map.forEach((value, key) => {
-                result[key] = (args: any, origin: string) => {
+                result.set(key, (args: any, origin: string) => {
+
                     if (value.second === null || value.second === undefined) {
                         return value.first(origin);
                     }
@@ -187,7 +212,7 @@ class Signer {
                     }
 
                     return value.first(model, client, origin);
-                };
+                });
             });
         }
 

@@ -5,11 +5,12 @@ import Client from '../models/Client';
 import ClientData from '../models/ClientData';
 import Pair from '../models/Pair';
 import RpcToken from '../models/RpcToken';
+import { LruMap } from '../utils/LruMap';
 import { ServiceRpcMethods } from './ServiceRpcMethods';
 
 export default class ClientService implements ServiceRpcMethods {
 
-    private clients: Map<string, Client> = new Map();
+    private clients: LruMap<string, Client> = new LruMap(5000);
 
     constructor(
         private readonly keyPairHelper: KeyPairHelper,
@@ -35,21 +36,32 @@ export default class ClientService implements ServiceRpcMethods {
     }
 
     public checkAccessToken(accessToken: RpcToken, origin: string): Client | undefined {
-        const client = this.clients.get(accessToken.accessToken) || this.authenticatorRegisterClient(accessToken);
+        let client: Client | undefined;
 
-        const clearOrigin = origin.toLowerCase()
-            .replace('http://', '')
-            .replace('https://', '')
-            .replace('www.', '');
+        try {
+            client = this.clients.get(accessToken.accessToken) || this.authenticatorRegisterClient(accessToken);
 
-        const isValidOrigin = client ? client.checkOrigin(clearOrigin) : false;
-        const tokenExpired = client ? client.tokenExpired() : true;
+            const clearOrigin = origin.toLowerCase()
+                .replace('http://', '')
+                .replace('https://', '')
+                .replace('www.', '');
 
-        return isValidOrigin && !tokenExpired ? client : undefined;
+            const isValidOrigin = client ? client.checkOrigin(clearOrigin) : false;
+            const tokenExpired = client ? client.tokenExpired() : true;
+
+            client = isValidOrigin && !tokenExpired ? client : undefined;
+
+        } catch (e) {
+            console.log(e);
+            client = undefined;
+        }
+
+        return client;
     }
 
     public authenticatorRegisterClient(token: RpcToken): Client {
         if (this.tokenValidator.validate(token)) {
+
             const auth = this.tokenValidator.getAuth(token);
             const keyPair = this.keyPairHelper.createClientKeyPair(auth.passPhrase, '');
 
@@ -62,12 +74,11 @@ export default class ClientService implements ServiceRpcMethods {
                 token.tokenType
             );
 
-            this.clients.set(token.accessToken, client);
+            this.clients.set(token.accessToken, client, auth.expireDate.getTime());
 
             return client;
         }
 
-        console.warn('token validation fail');
         throw new Error('Wrong auth token!');
     }
 }
