@@ -42,13 +42,23 @@ class Signer {
     }
 
     private initRemote() {
-        const port: string = ArgumentUtils.getValue('LISTEN_PORT', '--port', '3545');
-        const nodeHost: string = ArgumentUtils.getValue('HOST_NODE', '--host', '');
+        const port: string = ArgumentUtils.getValue('PORT', '--port', '3545');
+        const host: string = ArgumentUtils.getValue('HOST', '--host', '127.0.0.1');
+        const nodeHost: string = ArgumentUtils.getValue('HOST_NODE', '--node', '');
         const signerPassPhrase: string = ArgumentUtils.getValue('PASS_PHRASE', '--signerPass', 'signer default pass');
         const authenticatorPublicKey: string = ArgumentUtils.getValue('AUTHENTICATOR_PK', '--authPK');
         const jwtRsaCert: string = ArgumentUtils.getValue('JWT_RSA_CERT', '--jwtRsaCert');
 
-        this.init(false, parseInt(port, 10), nodeHost, signerPassPhrase, authenticatorPublicKey, undefined, jwtRsaCert);
+        this.init(
+            false,
+            parseInt(port, 10),
+            host,
+            nodeHost,
+            signerPassPhrase,
+            authenticatorPublicKey,
+            undefined,
+            jwtRsaCert
+        );
     }
 
     private initLocal() {
@@ -64,6 +74,7 @@ class Signer {
     private init(
         useLocal: boolean,
         port: number,
+        host: string,
         nodeHost: string,
         signerPassPhrase: string,
         authenticatorPublicKey?: string,
@@ -117,7 +128,7 @@ class Signer {
             this.decryptionService
         );
 
-        this.initService(methods, port);
+        this.initService(methods, port, host);
 
         if (clientPassPhrase && authenticatorKeyPair) {
             const authenticator: Authenticator = new Authenticator(authenticatorKeyPair, ownKeyPair.getPublicKey());
@@ -125,7 +136,7 @@ class Signer {
         }
     }
 
-    private initService(methods: Map<string, (args: any, origin: string) => any>, port: number) {
+    private initService(methods: Map<string, (args: any, origin: string) => any>, port: number, host: string) {
         app.use(cors());
         app.use(bodyParser.urlencoded({extended: false}));
         app.use(bodyParser.text({type: '*/*', limit: '50MB'}));
@@ -135,7 +146,7 @@ class Signer {
             (req: Request<any>, res: Response, next: NextFunction) => this.executeMethod(methods, req, res, next)
         );
 
-        app.listen(port, () => console.log('Signer running on port', port));
+        app.listen(port, host, () => console.log('Signer running on port and host', port, host));
     }
 
     private async executeMethod(
