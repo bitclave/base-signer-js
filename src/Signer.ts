@@ -183,11 +183,12 @@ class Signer {
             res.send(data);
 
         } catch (e) {
-            data.error = e.message;
-            data.result = (e.stack || '')
+            data.error = (e.stack || '')
                 .toString()
                 .replace('    ', '')
                 .split('\n');
+
+            data.result = e.message;
 
             res.status(500).send(data);
         }
