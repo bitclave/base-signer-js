@@ -90,7 +90,7 @@ class Signer {
             nodeHost.length === 0 ||
             nodeHost.indexOf('http') === -1) {
             throw new Error('For run Signer need setup node host! For setup use' +
-                ' "environment": "HOST_NODE" or "command arguments": "--host" ');
+                ' "environment": "HOST_NODE" or "command arguments": "--node" ');
         }
 
         const keyPairHelper: KeyPairHelper = new KeyPairHelperImpl(nodeHost);
