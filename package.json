@@ -11,7 +11,7 @@
     "remove-bitcore-lib-dep": "node remove-bitcore-lib-dep.js",
     "build": "npm run remove-bitcore-lib-dep && webpack",
     "start": "node build/Signer.js",
-    "debug": "npm run remove-bitcore-lib-dep && webpack --config webpack.config.js && node --inspect -r ts-node/register ./src/Signer.ts"
+    "debug": "npm run remove-bitcore-lib-dep && webpack --config webpack.config.js && node --inspect=9400 -r ts-node/register ./src/Signer.ts"
   },
   "nyc": {
     "extension": [

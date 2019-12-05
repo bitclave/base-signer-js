@@ -139,11 +139,15 @@ class Signer {
     private initService(methods: Map<string, (args: any, origin: string) => any>, port: number, host: string) {
         app.use(cors());
         app.use(bodyParser.urlencoded({extended: false}));
-        app.use(bodyParser.text({type: '*/*', limit: '50MB'}));
+        app.use(bodyParser.text({type: '*/*', limit: '150MB'}));
 
         app.post(
             '/',
-            (req: Request<any>, res: Response, next: NextFunction) => this.executeMethod(methods, req, res, next)
+            (req: Request<any>, res: Response, next: NextFunction) => {
+                req.setTimeout(50000);
+
+                return this.executeMethod(methods, req, res, next);
+            }
         );
 
         app.listen(port, host, () => console.log('Signer running on port and host', port, host));
@@ -183,7 +187,7 @@ class Signer {
             res.send(data);
 
         } catch (e) {
-            data.error = (e.stack || '')
+            data.error = (e.stack || 'signer')
                 .toString()
                 .replace('    ', '')
                 .split('\n');
