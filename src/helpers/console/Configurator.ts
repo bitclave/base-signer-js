@@ -25,10 +25,10 @@ export class Configurator {
             const pass: string | undefined = Configurator.result.get('pass');
             Configurator.result.delete('pass');
 
-            if (pass != undefined) {
+            if (pass) {
                 await Configurator.saveConfiguration(pass, Configurator.result);
             } else {
-                throw 'Internal error! Pass not found!'
+                throw new Error('Internal error! Pass not found!');
             }
         }
 
@@ -83,7 +83,7 @@ export class Configurator {
             return await Configurator.inputPassword();
 
         } else {
-            if (Configurator.result.get('pass') != pass) {
+            if (Configurator.result.get('pass') !== pass) {
                 Configurator.result.delete('pass');
                 console.log('Password incorrect. Please reenter password...');
 
@@ -133,11 +133,10 @@ export class Configurator {
 
                 return;
             } catch (e) {
-                //ignore error
+                // ignore error
             }
 
             countTry++;
         }
     }
-
 }

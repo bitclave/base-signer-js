@@ -1,13 +1,13 @@
-import AccessToken from './AccessToken';
+import RpcToken from './RpcToken';
 
-export default class CheckSignature extends AccessToken {
-    msg: string;
-    sig: string;
+export default class CheckSignature extends RpcToken {
+
+    public readonly msg: string;
+    public readonly sig: string;
 
     constructor(msg: string = '', sig: string = '', accessToken: string = '') {
         super(accessToken);
         this.msg = msg;
         this.sig = sig;
     }
-
 }

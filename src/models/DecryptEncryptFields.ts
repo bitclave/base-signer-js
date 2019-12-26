@@ -1,9 +1,9 @@
-import AccessToken from './AccessToken';
+import RpcToken from './RpcToken';
 
-export default class DecryptEncryptFields extends AccessToken {
+export default class DecryptEncryptFields extends RpcToken {
 
-    fields: Map<string, string>;
-    passwords: Map<string, string>;
+    public readonly fields: Map<string, string>;
+    public readonly passwords: Map<string, string>;
 
     constructor(
         accessToken: string = '',
@@ -14,5 +14,4 @@ export default class DecryptEncryptFields extends AccessToken {
         this.fields = fields || new Map();
         this.passwords = passwords || new Map();
     }
-
 }

@@ -1,7 +1,6 @@
 export interface MessageSigner {
 
-    signMessage(data: any): string
+    signMessage(data: any): string;
 
-    checkSig(data: any, sig: string): boolean
-
+    checkSig(data: any, sig: string): boolean;
 }

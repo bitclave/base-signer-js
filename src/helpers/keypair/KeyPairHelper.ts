@@ -2,8 +2,7 @@ import { KeyPair } from './KeyPair';
 
 export interface KeyPairHelper {
 
-    createSimpleKeyPair(passPhrase: string): KeyPair
+    createSimpleKeyPair(passPhrase: string): KeyPair;
 
-    createClientKeyPair(passPhrase: string, origin: string): KeyPair
-
+    createClientKeyPair(passPhrase: string, origin: string): KeyPair;
 }

@@ -1,6 +1,6 @@
 export default class ArgumentUtils {
 
-    public static getValue(envKey: string, argsKey: string, def: string | undefined = undefined): any {
+    public static getValue(envKey: string, argsKey: string, def?: string | undefined): any {
         if (process.env.hasOwnProperty(envKey)) {
             return process.env[envKey];
         }
@@ -16,5 +16,4 @@ export default class ArgumentUtils {
         }
         return def;
     }
-
 }

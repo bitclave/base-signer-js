@@ -26,12 +26,11 @@ export default class CryptoUtils {
         return bytes.toString(CryptoJS.enc.Utf8);
     }
 
-    public static PBKDF2(password: string, keySize: number): string { //for generate private key
+    public static PBKDF2(password: string, keySize: number): string { // for generate private key
         return CryptoJS.PBKDF2(
             password,
             CryptoUtils.sha384(CryptoUtils.sha384(password)),
             {keySize: keySize / 32, iterations: 100}
         ).toString(CryptoJS.enc.Hex);
     }
-
 }

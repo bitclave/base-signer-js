@@ -1,45 +1,50 @@
-import CryptoUtils from '../CryptoUtils';
 import { AcceptedField } from '../../models/AcceptedField';
-import { Site } from '../../models/Site';
-import JsonUtils from '../JsonUtils';
+import DataRequest from '../../models/DataRequest';
 import { AccessRight, Permissions } from '../../models/Permissions';
+import { Site } from '../../models/Site';
 import { PermissionsSource } from '../assistant/PermissionsSource';
 import { SiteDataSource } from '../assistant/SiteDataSource';
+import CryptoUtils from '../CryptoUtils';
+import JsonUtils from '../JsonUtils';
 import KeyPairSimple from './KeyPairSimple';
-import DataRequest from '../../models/DataRequest';
+
+const bitcore = require('bitcore-lib');
 
 export default class KeyPairClient extends KeyPairSimple {
 
     private permissions: Permissions;
     private permissionsSource: PermissionsSource;
     private siteDataSource: SiteDataSource;
-    private origin: string;
+    private acceptedOrigins: Set<string>;
+    private currentOrigin: string;
     private isConfidential: boolean = false;
 
-    constructor(privateKey: any,
-                publicKey: any,
-                permissionsSource: PermissionsSource,
-                siteDataSource: SiteDataSource,
-                origin: string) {
+    constructor(
+        privateKey: any,
+        publicKey: any,
+        permissionsSource: PermissionsSource,
+        siteDataSource: SiteDataSource,
+        origin: string
+    ) {
         super(privateKey, publicKey);
 
         this.permissions = new Permissions();
         this.permissionsSource = permissionsSource;
         this.siteDataSource = siteDataSource;
-        this.origin = origin;
+        this.currentOrigin = origin;
     }
 
-    encryptFields(fields: Map<string, string>): Map<string, string> {
+    public encryptFields(fields: Map<string, string>): Map<string, string> {
         return this.prepareData(fields, true, new Map());
     }
 
-    encryptPermissionsFields(recipient: string, data: Map<string, AccessRight>): string {
+    public encryptPermissionsFields(recipient: string, data: Map<string, AccessRight>): string {
         const resultMap: Map<string, AcceptedField> = new Map();
 
-        if (data != null && data.size > 0) {
+        if (data && data.size > 0) {
             this.syncPermissions();
 
-            for (let [key, value] of data.entries()) {
+            for (const [key, value] of data.entries()) {
                 if (!this.hasPermissions(key, false)) {
                     continue;
                 }
@@ -54,7 +59,7 @@ export default class KeyPairClient extends KeyPairSimple {
         return this.encryptMessage(recipient, JSON.stringify(jsonMap));
     }
 
-    encryptFieldsWithPermissions(recipient: string, data: Map<string, AccessRight>): Map<string, string> {
+    public encryptFieldsWithPermissions(recipient: string, data: Map<string, AccessRight>): Map<string, string> {
         const resultMap: Map<string, string> = new Map();
 
         if (data != null && data.size > 0) {
@@ -74,8 +79,33 @@ export default class KeyPairClient extends KeyPairSimple {
         return resultMap;
     }
 
-    decryptFields(fields: Map<string, string>, passwords?: Map<string, string>): Map<string, string> {
+    public decryptFields(fields: Map<string, string>, passwords?: Map<string, string>): Map<string, string> {
         return this.prepareData(fields, false, passwords || new Map());
+    }
+
+    public setAcceptedOrigins(origins: Set<string>) {
+        this.acceptedOrigins = new Set<string>(origins);
+
+        this.permissions.fields.clear();
+        this.isConfidential = this.acceptedOrigins.has('*');
+    }
+
+    public changeCurrentOrigin(origin: string) {
+        const clearOrigin = origin.toLowerCase()
+            .replace('http://', '')
+            .replace('https://', '')
+            .replace('www.', '');
+
+        if (!this.acceptedOrigins.has('*') && !this.acceptedOrigins.has(clearOrigin)) {
+            throw new Error('Unapproved origin');
+        }
+
+        if (this.currentOrigin !== clearOrigin && !this.acceptedOrigins.has('*')) {
+            this.permissions.fields.clear();
+            this.isConfidential = false;
+        }
+
+        this.currentOrigin = clearOrigin;
     }
 
     private prepareData(
@@ -87,16 +117,16 @@ export default class KeyPairClient extends KeyPairSimple {
 
         this.syncPermissions();
 
-        for (let [key, value] of data.entries()) {
+        for (const [key, value] of data.entries()) {
             if (!this.hasPermissions(key, !encrypt)) {
                 continue;
             }
 
             const pass = passwords.has(key) ? passwords.get(key) : this.generatePasswordForField(key);
-            if (pass != null && pass != undefined && pass.length > 0) {
+            if (pass && pass.length > 0) {
                 const changedValue = encrypt
-                    ? CryptoUtils.encryptAes256(value, pass)
-                    : CryptoUtils.decryptAes256(value, pass);
+                                     ? CryptoUtils.encryptAes256(value, pass)
+                                     : CryptoUtils.decryptAes256(value, pass);
 
                 result.set(key.toLowerCase(), changedValue);
             }
@@ -113,13 +143,13 @@ export default class KeyPairClient extends KeyPairSimple {
         const keyPermission: AccessRight | undefined = this.permissions.fields.get(field);
 
         return read
-            ? keyPermission === AccessRight.R || keyPermission === AccessRight.RW
-            : keyPermission === AccessRight.RW;
+               ? keyPermission === AccessRight.R || keyPermission === AccessRight.RW
+               : keyPermission === AccessRight.RW;
     }
 
     private syncPermissions() {
         if (!this.isConfidential && this.permissions.fields.size === 0) {
-            const site: Site = this.siteDataSource.getSiteData(this.origin);
+            const site: Site = this.siteDataSource.getSiteData(this.currentOrigin);
             this.isConfidential = site.confidential;
 
             if (!site.confidential) {
@@ -127,7 +157,7 @@ export default class KeyPairClient extends KeyPairSimple {
                     site.publicKey, this.getPublicKey()
                 );
 
-                for (let request of requests) {
+                for (const request of requests) {
                     const strDecrypt: string = this.decryptMessage(site.publicKey, request.responseData);
                     const jsonDecrypt: any = JSON.parse(strDecrypt);
                     let resultMap: Map<string, AcceptedField> = new Map();
@@ -154,10 +184,14 @@ export default class KeyPairClient extends KeyPairSimple {
     }
 
     private generatePasswordForField(fieldName: string): string {
-        return CryptoUtils.PBKDF2(
-            CryptoUtils.keccak256(this._privateKey.toString(16)) + fieldName.toLowerCase(),
-            384
-        );
-    }
+        // const result: string = CryptoUtils.PBKDF2(
+        //     CryptoUtils.keccak256(this.privateKey.toString(16)) + fieldName.toLowerCase(),
+        //     384
+        // );
 
+        return bitcore.crypto.Hash.sha256hmac(
+            bitcore.deps.Buffer(this._privateKey.toString(16)),
+            bitcore.deps.Buffer(fieldName.toLowerCase())
+        ).toString('hex');
+    }
 }

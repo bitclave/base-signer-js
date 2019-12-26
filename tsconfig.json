@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "outDir": "./",
+    "rootDir": "./",
     "module": "commonjs",
     "target": "es5",
     "baseUrl": "http://localhost:8080",
@@ -9,9 +10,10 @@
       "dom",
       "es2016"
     ],
-    "sourceMap": true,
+    "diagnostics": true,
+    "sourceMap": false,
     "moduleResolution": "node",
-    "rootDir": "./",
+    "allowSyntheticDefaultImports": true,
     "emitDecoratorMetadata": true,
     "removeComments": false,
     "declaration": false,
@@ -23,7 +25,10 @@
     "downlevelIteration": true,
     "strictNullChecks": true,
     "suppressImplicitAnyIndexErrors": true,
-    "noUnusedLocals": true
+    "noUnusedLocals": true,
+    "types": [
+      "reflect-metadata"
+    ]
   },
   "exclude": [
     "node_modules",

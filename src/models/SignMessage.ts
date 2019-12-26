@@ -1,12 +1,11 @@
-import AccessToken from './AccessToken';
+import RpcToken from './RpcToken';
 
-export default class SignMessage extends AccessToken {
+export default class SignMessage extends RpcToken {
 
-    message: string;
+    public readonly message: string;
 
     constructor(message: string = '', accessToken: string = '') {
         super(accessToken);
         this.message = message;
     }
-
 }

@@ -1,14 +1,15 @@
-import { KeyPairHelper } from './KeyPairHelper';
-import { KeyPair } from './KeyPair';
-import CryptoUtils from '../CryptoUtils';
-import KeyPairSimple from './KeyPairSimple';
-import KeyPairClient from './KeyPairClient';
 import { AssistantNodeRepository, RepositoryStrategyType } from '../assistant/AssistantNodeRepository';
-import bitcore = require('bitcore-lib');
+import CryptoUtils from '../CryptoUtils';
+import { KeyPair } from './KeyPair';
+import KeyPairClient from './KeyPairClient';
+import { KeyPairHelper } from './KeyPairHelper';
+import KeyPairSimple from './KeyPairSimple';
+
+const bitcore = require('bitcore-lib');
 
 export default class KeyPairHelperImpl implements KeyPairHelper {
 
-    private assistant: AssistantNodeRepository;
+    private readonly assistant: AssistantNodeRepository;
 
     constructor(nodeHost: string) {
         this.assistant = new AssistantNodeRepository(nodeHost, RepositoryStrategyType.Postgres);
@@ -20,8 +21,10 @@ export default class KeyPairHelperImpl implements KeyPairHelper {
         return new KeyPairSimple(privateKey, privateKey.toPublicKey());
     }
 
-    public createClientKeyPair(passPhrase: string,
-                               origin: string): KeyPair {
+    public createClientKeyPair(
+        passPhrase: string,
+        origin: string
+    ): KeyPair {
         const privateKey: any = this.generatePrivateKey(passPhrase);
 
         return new KeyPairClient(
@@ -40,5 +43,4 @@ export default class KeyPairHelperImpl implements KeyPairHelper {
 
         return new bitcore.PrivateKey(bn);
     }
-
 }
